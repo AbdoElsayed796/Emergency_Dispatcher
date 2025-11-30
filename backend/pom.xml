@@ -6,13 +6,19 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.0.0</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>Smart_Emergency_Dispatcher</artifactId>
+	<artifactId>smart-emergency-dispatcher</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Smart_Emergency_Dispatcher</name>
-	<description>Demo project for Spring Boot</description>
+	<name>Smart Emergency Dispatcher</name>
+	<description>
+        The Smart Emergency Dispatch Optimization System
+        is designed to enhance emergency response efficiency
+        in urban areas. The system connects emergency vehicles,
+        dispatch centers, and citizens through a centralized,
+        real-time database.
+    </description>
 	<url/>
 	<licenses>
 		<license/>
@@ -34,10 +40,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-security</artifactId>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
@@ -50,7 +56,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
@@ -67,11 +72,11 @@
 			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-security-test</artifactId>-->
+<!--			<scope>test</scope>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux-test</artifactId>
@@ -87,6 +92,11 @@
 			<artifactId>spring-boot-starter-websocket-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.6.3</version>
+        </dependency>
 	</dependencies>
 
 	<build>
@@ -104,6 +114,11 @@
 							<groupId>org.springframework.boot</groupId>
 							<artifactId>spring-boot-configuration-processor</artifactId>
 						</path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>1.6.3</version>
+                        </path>
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>

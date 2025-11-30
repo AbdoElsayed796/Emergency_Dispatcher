@@ -1,4 +1,4 @@
-package com.example.Smart_Emergency_Dispatcher;
+package smartemergencydispatcher;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
