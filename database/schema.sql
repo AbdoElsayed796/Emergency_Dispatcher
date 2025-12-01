@@ -1,0 +1,53 @@
+CREATE DATABASE IF NOT EXISTS smart_emergency_dispatcher;
+USE smart_emergency_dispatcher;
+
+CREATE TABLE IF NOT EXISTS user (
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	name VARCHAR(64) NOT NULL,
+	email VARCHAR(64) UNIQUE NOT NULL,
+	password VARCHAR(64) NOT NULL,
+	phone VARCHAR(16) UNIQUE,
+	role ENUM('DISPATCHER', 'RESPONDER', 'ADMIN') NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS station (
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	type ENUM('FIRE', 'POLICE', 'MEDICAL') NOT NULL,
+	name VARCHAR(64) NOT NULL,
+	phone VARCHAR(16) UNIQUE NOT NULL,
+	location POINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS vehicle (
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	type ENUM('FIRE', 'POLICE', 'MEDICAL') NOT NULL,
+	status ENUM('AVAILABLE', 'ON_ROUTE', 'BUSY', 'MAINTENANCE') NOT NULL,
+	capacity INT NOT NULL,
+	location POINT NOT NULL,
+	station_id INT NOT NULL,
+	responder_user_id INT NOT NULL,
+	FOREIGN KEY (station_id) REFERENCES station(id),
+	FOREIGN KEY (responder_user_id) REFERENCES user(id)
+);
+
+CREATE TABLE IF NOT EXISTS incident (
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	type ENUM('FIRE', 'POLICE', 'MEDICAL') NOT NULL,
+	severity_level ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NOT NULL,
+    status ENUM('REPORTED', 'ASSIGNED', 'RESOLVED') NOT NULL,
+	reported_time TIMESTAMP NOT NULL,
+	location POINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS assignment (
+	assignment_id INT PRIMARY KEY AUTO_INCREMENT,
+	incident_id INT NOT NULL,
+	vehicle_id INT NOT NULL,
+	dispatcher_user_id INT NOT NULL,
+	time_assigned TIMESTAMP NOT NULL,
+	time_accepted TIMESTAMP,
+	time_finished TIMESTAMP,
+	FOREIGN KEY (incident_id) REFERENCES incident(id),
+	FOREIGN KEY (vehicle_id) REFERENCES vehicle(id),
+	FOREIGN KEY (dispatcher_user_id) REFERENCES user(id)
+);
