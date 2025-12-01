@@ -20,7 +20,7 @@ CREATE TRIGGER assignment_before_insert
 BEFORE INSERT ON assignment
 FOR EACH ROW
 BEGIN
-    DECLARE vehicle_status ENUM('AVAILABLE', 'ASSIGNED');
+    DECLARE vehicle_status ENUM('AVAILABLE', 'ON_ROUTE', 'BUSY', 'MAINTENANCE');
     DECLARE vehicle_type ENUM('FIRE', 'POLICE', 'MEDICAL');
 	DECLARE incident_type ENUM('FIRE', 'POLICE', 'MEDICAL');
     
