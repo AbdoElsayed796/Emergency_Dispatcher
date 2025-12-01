@@ -9,7 +9,7 @@ CREATE TRIGGER vehicle_before_insert
 BEFORE INSERT ON vehicle
 FOR EACH ROW
 BEGIN
-    DECLARE station_type ENUM('FIRE','POLICE','MEDICAL','RESCUE','HAZMAT');
+    DECLARE station_type ENUM('FIRE', 'POLICE', 'MEDICAL');
     SELECT type INTO station_type FROM station WHERE id = NEW.station_id;
     IF NEW.type != station_type THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Vehicle type must match station type';
@@ -20,9 +20,9 @@ CREATE TRIGGER assignment_before_insert
 BEFORE INSERT ON assignment
 FOR EACH ROW
 BEGIN
-    DECLARE vehicle_status ENUM('AVAILABLE','ASSIGNED');
-    DECLARE vehicle_type ENUM('FIRE','POLICE','MEDICAL','RESCUE','HAZMAT');
-	DECLARE incident_type ENUM('FIRE','POLICE','MEDICAL','RESCUE','HAZMAT');
+    DECLARE vehicle_status ENUM('AVAILABLE', 'ASSIGNED');
+    DECLARE vehicle_type ENUM('FIRE', 'POLICE', 'MEDICAL');
+	DECLARE incident_type ENUM('FIRE', 'POLICE', 'MEDICAL');
     
     SELECT type, status INTO vehicle_type, vehicle_status FROM vehicle WHERE id = NEW.vehicle_id;
     IF vehicle_status != 'AVAILABLE' THEN
