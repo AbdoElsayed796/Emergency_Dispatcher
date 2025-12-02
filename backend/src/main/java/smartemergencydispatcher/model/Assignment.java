@@ -1,9 +1,7 @@
 package smartemergencydispatcher.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -16,23 +14,27 @@ public class Assignment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "assignment_id")
     private Integer assignmentId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "incident_id", nullable = false)
     private Incident incident;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dispatcher_user_id", nullable = false)
     private User dispatcher;
 
-    @Column(nullable = false)
+    @Column(name = "time_assigned", nullable = false)
     private LocalDateTime timeAssigned;
 
+    @Column(name = "time_accepted")
     private LocalDateTime timeAccepted;
+
+    @Column(name = "time_finished")
     private LocalDateTime timeFinished;
 }

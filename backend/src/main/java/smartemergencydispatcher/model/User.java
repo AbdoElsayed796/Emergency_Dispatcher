@@ -4,6 +4,7 @@ package smartemergencydispatcher.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import smartemergencydispatcher.model.enums.Role;
 
 @Entity
 @Table(name = "user")
@@ -31,8 +32,4 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
-
-    public enum Role {
-        DISPATCHER, RESPONDER, ADMIN
-    }
 }

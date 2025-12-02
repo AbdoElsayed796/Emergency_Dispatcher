@@ -2,13 +2,16 @@ package smartemergencydispatcher.model;
 
 
 import jakarta.persistence.*;
-import lombok.Data;
-import org.apache.catalina.User;
+import lombok.*;
 import org.locationtech.jts.geom.Point;
+import smartemergencydispatcher.model.enums.VehicleStatus;
+import smartemergencydispatcher.model.enums.VehicleType;
 
 @Entity
 @Table(name = "vehicle")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Vehicle {
 
     @Id
@@ -29,19 +32,11 @@ public class Vehicle {
     @Column(nullable = false, columnDefinition = "POINT")
     private Point location;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "station_id", nullable = false)
     private Station station;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responder_user_id", nullable = false)
     private User responder;
-
-    public enum VehicleType {
-        FIRE, POLICE, MEDICAL
-    }
-
-    public enum VehicleStatus {
-        AVAILABLE, ON_ROUTE, BUSY, MAINTENANCE
-    }
 }

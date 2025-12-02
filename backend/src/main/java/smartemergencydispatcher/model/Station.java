@@ -2,13 +2,15 @@ package smartemergencydispatcher.model;
 
 
 import jakarta.persistence.*;
-import lombok.Data;
-
-import java.awt.*;
+import lombok.*;
+import smartemergencydispatcher.model.enums.StationType;
+import org.locationtech.jts.geom.Point;
 
 @Entity
 @Table(name = "station")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Station {
 
     @Id
@@ -27,8 +29,4 @@ public class Station {
 
     @Column(nullable = false, columnDefinition = "POINT")
     private Point location;
-
-    public enum StationType {
-        FIRE, POLICE, MEDICAL
-    }
 }
