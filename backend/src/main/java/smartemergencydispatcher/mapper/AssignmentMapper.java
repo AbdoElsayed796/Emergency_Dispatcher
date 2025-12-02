@@ -47,7 +47,7 @@ public class AssignmentMapper {
         );
     }
 
-    public Assignment toEntity(AssignmentCreateDTO dto, Incident incident, Vehicle vehicle, User dispatcher) {
+    public Assignment toEntity(Incident incident, Vehicle vehicle, User dispatcher) {
         Assignment assignment = new Assignment();
         assignment.setIncident(incident);
         assignment.setVehicle(vehicle);

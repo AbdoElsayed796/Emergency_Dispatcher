@@ -11,7 +11,7 @@ import smartemergencydispatcher.model.enums.Role;
 @AllArgsConstructor
 class UserUpdateDTO {
     private String name;
-    private String email;
+    private String password;
     private String phone;
     private Role role;
 }
