@@ -1,9 +1,11 @@
 import React from "react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from 'lucide-react';
 import axios from "axios";
+const API_BASE_URL = "http://localhost:8080";
 export default function Login() {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -19,16 +21,36 @@ export default function Login() {
     if (error) setError('');
   };
     const login = async (formData) => {
+      console.log("Logging in with", formData);
         try {
             setLoading(true);
             setError('');
-            const response = await axios.post('/api/auth/login', formData);
+            const response = await axios.post(`${API_BASE_URL}/auth/login`, formData);
+            console.log(response.data);
             if (response.data.success) {
                 setSuccessMessage('Login successful! Redirecting...');
+                setError('');
                 setLoading(false);
                 localStorage.setItem('token', response.data.token);
+                setTimeout(() => {
+                    const userRole = response.data.user.role;
+                    switch (userRole) {
+                        case 'DISPATCHER':
+                            navigate('/dispatcher/dashboard');
+                            break;
+                        case 'RESPONDER':
+                            navigate('/responder/dashboard');
+                            break;
+                        case 'ADMIN':
+                            navigate('/admin/dashboard');
+                            break;
+                        default:
+                            navigate('/');
+                    }
+                }, 500);
             }
             else {
+                setLoading(false);
                 setError(response.data.message || 'Login failed. Please try again.');
             }
         } catch (err) {
