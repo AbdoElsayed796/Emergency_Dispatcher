@@ -25,10 +25,10 @@ const AdminDashboard = () => {
         fetch("http://localhost:8080/api/admin/stats"),
         fetch("http://localhost:8080/api/admin/incidents/active"),
       ]);
-
+     
       const statsData = await statsRes.json();
       const incidentsData = await incidentsRes.json();
-
+      console.log(incidentsData);
       setStats(statsData);
       setActiveIncidents(incidentsData);
     } catch (err) {
@@ -45,28 +45,29 @@ const AdminDashboard = () => {
 
   const getSeverityColor = (severity) => {
     switch (severity) {
-      case "Critical":
-        return "bg-red-100 text-red-800 border-red-300";
-      case "High":
-        return "bg-orange-100 text-orange-800 border-orange-300";
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300";
-      case "Low":
-        return "bg-green-100 text-green-800 border-green-300";
+      case "CRITICAL":
+        return "bg-red-600 text-red-100 border-red-700";
+      case "HIGH":
+        return "bg-orange-600 text-orange-100 border-orange-700";
+      case "MEDIUM":
+        return "bg-yellow-500 text-yellow-900 border-yellow-600";
+      case "LOW":
+        return "bg-green-600 text-green-100 border-green-700";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-300";
+        return "bg-gray-500 text-gray-100 border-gray-600";
     }
   };
+  
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Reported":
+      case "REPORTED":
         return "text-red-600";
-      case "Assigned":
+      case "ASSIGNED":
         return "text-blue-600";
-      case "On Route":
+      case "ON ROUTE":
         return "text-orange-600";
-      case "Resolved":
+      case "RESOLVED":
         return "text-green-600";
       default:
         return "text-gray-600";
@@ -92,7 +93,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between">
             <div>
               <p className="text-gray-500">Total Users</p>
-              <h3 className="text-3xl font-bold">{stats.totalUsers}</h3>
+              <h3 className="text-3xl font-bold"> {stats?.totalUsers || 0}</h3>
             </div>
             <Users className="w-10 h-10 text-blue-500" />
           </div>
@@ -103,9 +104,9 @@ const AdminDashboard = () => {
           <div className="flex justify-between">
             <div>
               <p className="text-gray-500">Vehicles</p>
-              <h3 className="text-3xl font-bold">{stats.activeVehicles}</h3>
+              <h3 className="text-3xl font-bold">{stats?.activeVehicles || 0}</h3>
               <p className="text-xs text-gray-600">
-                {stats.availableVehicles} available
+                {stats?.availableVehicles || 0} available
               </p>
             </div>
             <Car className="w-10 h-10 text-green-500" />
@@ -117,7 +118,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between">
             <div>
               <p className="text-gray-500">Stations</p>
-              <h3 className="text-3xl font-bold">{stats.stations}</h3>
+              <h3 className="text-3xl font-bold">{stats?.stations || 0}</h3>
             </div>
             <Building2 className="w-10 h-10 text-purple-500" />
           </div>
@@ -128,7 +129,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between">
             <div>
               <p className="text-gray-500">Pending Requests</p>
-              <h3 className="text-3xl font-bold text-red-600">{stats.pendingRequests}</h3>
+              <h3 className="text-3xl font-bold text-red-600">{stats?.pendingRequests || 0}</h3>
             </div>
             <AlertCircle className="w-10 h-10 text-red-500" />
           </div>
@@ -157,15 +158,17 @@ const AdminDashboard = () => {
                 <td className="px-3 py-2">{incident.type}</td>
                 <td className="px-3 py-2 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {incident.location}
+                  {incident.location.latitude }
+                  {"   , "}
+                  {incident.location.longitude }
                 </td>
                 <td className="px-3 py-2">
                   <span
                     className={`px-2 py-1 text-xs rounded-full border ${getSeverityColor(
-                      incident.severity
+                      incident.severityLevel
                     )}`}
                   >
-                    {incident.severity}
+                    {incident.severityLevel}
                   </span>
                 </td>
                 <td className={`px-3 py-2 font-semibold ${getStatusColor(incident.status)}`}>

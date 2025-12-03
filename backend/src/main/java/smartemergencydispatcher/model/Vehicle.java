@@ -39,4 +39,6 @@ public class Vehicle {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responder_user_id", nullable = false)
     private User responder;
+
+
 }

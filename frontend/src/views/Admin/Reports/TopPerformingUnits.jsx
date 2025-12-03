@@ -44,8 +44,8 @@ const TopPerformingUnits = () => {
       );
 
       if (!response.ok) throw new Error("Failed to fetch report data");
-
       const data = await response.json();
+      console.log(data);
       setReportData(data);
       setShowResults(true);
     } catch (err) {
@@ -78,7 +78,7 @@ const TopPerformingUnits = () => {
         title="Top Performing Units"
         description="Responders and stations with the best average response times"
       />
-
+  
       <FilterSection>
         <FilterGrid>
           <SelectFilter
@@ -104,7 +104,7 @@ const TopPerformingUnits = () => {
           loading={loading}
         />
       </FilterSection>
-
+  
       {showResults && (
         <div className="space-y-4">
           {reportData.length === 0 ? (
@@ -133,30 +133,53 @@ const TopPerformingUnits = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {reportData.map((unit, idx) => {
-                      const badge = getRankBadge(unit.rank);
+                      const rank = idx + 1;
+                      const badge = getRankBadge(rank);
+  
+                      // Optional: color badge for avgResponseTime
+                      const responseTimeColor =
+                        unit.avgResponseTime <= 5
+                          ? "bg-green-100 text-green-800"
+                          : unit.avgResponseTime <= 10
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800";
+  
                       return (
-                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={unit.vehicle?.id || idx}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${badge.bg} ${badge.border} border`}>
+                            <div
+                              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${badge.bg} ${badge.border} border`}
+                            >
                               <span className="text-lg">{badge.icon}</span>
-                              <span className={`font-bold ${badge.text}`}>#{unit.rank}</span>
+                              <span className={`font-bold ${badge.text}`}>
+                                #{rank}
+                              </span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <Award className="w-4 h-4 text-gray-400" />
-                              <span className="font-semibold text-gray-900">{unit.name}</span>
+                              <span className="font-semibold text-gray-900">
+                                {unit.vehicle?.responderName || "N/A"}
+                              </span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                              {unit.type}
+                              {unit.vehicle?.type || "N/A"}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-green-600" />
-                              <span className="font-semibold text-gray-900">{unit.avgResponseTime}</span>
+                              <Clock className="w-4 h-4 text-gray-600" />
+                              <span
+                                className={`font-semibold px-2 py-1 rounded-full ${responseTimeColor}`}
+                              >
+                                {unit.avgResponseTime ?? "N/A"}
+                              </span>
                             </div>
                           </td>
                         </tr>
@@ -171,6 +194,7 @@ const TopPerformingUnits = () => {
       )}
     </div>
   );
+  
 };
 
 export default TopPerformingUnits;

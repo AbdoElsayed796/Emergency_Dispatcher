@@ -1,6 +1,7 @@
 package smartemergencydispatcher.dto.incidentdto;
 
 import lombok.*;
+import org.locationtech.jts.geom.Point;
 import smartemergencydispatcher.dto.locationDTO.LocationDTO;
 import smartemergencydispatcher.model.enums.IncidentStatus;
 import smartemergencydispatcher.model.enums.IncidentType;
