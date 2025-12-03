@@ -1,0 +1,16 @@
+package smartemergencydispatcher.dto.stationdto;
+
+import lombok.*;
+import smartemergencydispatcher.dto.locationDTO.LocationDTO;
+import smartemergencydispatcher.model.enums.StationType;
+
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class StationCreateDTO {
+    private StationType type;
+    private String name;
+    private String phone;
+    private LocationDTO location;
+}
