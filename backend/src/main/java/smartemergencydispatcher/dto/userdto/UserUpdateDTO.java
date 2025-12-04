@@ -9,7 +9,7 @@ import smartemergencydispatcher.model.enums.Role;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-class UserUpdateDTO {
+public class UserUpdateDTO {
     private String name;
     private String password;
     private String phone;

@@ -9,7 +9,7 @@ import smartemergencydispatcher.model.enums.StationType;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-class StationUpdateDTO {
+public class StationUpdateDTO {
     private StationType type;
     private String name;
     private String phone;
