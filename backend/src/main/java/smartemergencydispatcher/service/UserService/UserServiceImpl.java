@@ -7,6 +7,7 @@ import smartemergencydispatcher.dto.userdto.UserCreateDTO;
 import smartemergencydispatcher.dto.userdto.UserUpdateDTO;
 import smartemergencydispatcher.mapper.UserMapper;
 import smartemergencydispatcher.model.User;
+import smartemergencydispatcher.model.enums.Role;
 import smartemergencydispatcher.repository.UserRepository;
 
 import java.util.List;
@@ -17,12 +18,21 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(this::mapToDTO)
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserDTO> getAllUsersByRole(Role role) {
+        return userRepository.findAllByRole(role)
+                .stream()
+                .map(userMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -35,7 +45,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(dto.getPhone());
         user.setRole(dto.getRole());
 
-        return mapToDTO(userRepository.save(user));
+        return userMapper.toDTO(userRepository.save(user));
     }
 
     @Override
@@ -49,16 +59,11 @@ public class UserServiceImpl implements UserService {
         user.setPhone(dto.getPhone());
         user.setRole(dto.getRole());
 
-        return mapToDTO(userRepository.save(user));
+        return userMapper.toDTO(userRepository.save(user));
     }
 
     @Override
     public void deleteUser(Integer id) {
         userRepository.deleteById(id);
-    }
-
-    private UserDTO mapToDTO(User user) {
-        UserMapper userMapper = new UserMapper();
-        return userMapper.toDTO(user);
     }
 }

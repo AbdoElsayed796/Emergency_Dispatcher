@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import smartemergencydispatcher.dto.userdto.UserDTO;
 import smartemergencydispatcher.dto.userdto.UserCreateDTO;
 import smartemergencydispatcher.dto.userdto.UserUpdateDTO;
+import smartemergencydispatcher.model.enums.Role;
 import smartemergencydispatcher.service.UserService.UserService;
 
 import java.util.List;
@@ -17,11 +18,15 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping
+    @GetMapping()
     public List<UserDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
+    @GetMapping("/by-role")
+    public List<UserDTO> getAllUsersByRole(@RequestParam Role role) {
+        return userService.getAllUsersByRole(role);
+    }
 
     @PostMapping
     public UserDTO createUser(@RequestBody UserCreateDTO dto) {
