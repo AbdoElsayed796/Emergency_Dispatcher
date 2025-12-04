@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
+
 @Service
 public class IncidentServiceImp implements IncidentService{
     private final IncidentRepository incidentRepository;
@@ -116,6 +118,17 @@ public class IncidentServiceImp implements IncidentService{
         Incident updated = incidentRepository.updateIncident(id, incident.getStatus(), incident.getSeverityLevel());
         return incidentMapper.toDTO(updated);
 
+    }
+    @Override
+    public List<IncidentDTO> getActiveIncidents() {
+        return incidentRepository.findByStatusActive()
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private IncidentDTO convertToDTO(Incident incident) {
+       return incidentMapper.toDTO(incident);
     }
     public List<IncidentDTO> getAllIncidents(){
         List<Incident> incidents = incidentRepository.findAllIncidents();

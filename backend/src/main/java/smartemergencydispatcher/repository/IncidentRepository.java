@@ -19,6 +19,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import smartemergencydispatcher.model.enums.IncidentStatus;
+
+import java.util.Collection;
+import java.util.List;
 @Repository
 public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     @Query("SELECT i FROM Incident i WHERE i.id = :id")
@@ -46,6 +50,16 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     @Modifying
     @Transactional
     Incident updateIncident(@Param("id") Integer id, @Param("status") IncidentStatus status , @Param("severity") SeverityLevel severityLevel);
+    default List<Incident> findByStatusActive() {
+        return findByStatusIn(List.of(IncidentStatus.ASSIGNED, IncidentStatus.ASSIGNED, IncidentStatus.REPORTED));
+    }
+
+    List<Incident> findByStatusIn(List<IncidentStatus> assigned);
+
+    long countByStatusIn(List<IncidentStatus> statuses);
+
+
+
     
     @Query("SELECT i FROM Incident i ORDER BY i.reportedTime DESC")
     List<Incident> findAllIncidents();

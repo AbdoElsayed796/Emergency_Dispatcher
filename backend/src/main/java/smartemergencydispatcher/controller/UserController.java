@@ -1,5 +1,14 @@
 package smartemergencydispatcher.controller;
 
+
+import lombok.RequiredArgsConstructor;
+import smartemergencydispatcher.dto.userdto.UserUpdateDTO;
+import smartemergencydispatcher.service.User.UserService;
+import smartemergencydispatcher.model.User;
+import smartemergencydispatcher.service.User.UserServiceImp;
+
+import java.util.List;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -10,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import smartemergencydispatcher.dto.userdto.UserCreateDTO;
 import smartemergencydispatcher.dto.userdto.UserDTO;
 import smartemergencydispatcher.dto.userdto.UserLoginDTO;
-import smartemergencydispatcher.service.User.UserService;
 
 import java.security.Key;
 import java.util.Date;
@@ -18,7 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/users")
+// @RequestMapping("/auth")
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
     
@@ -35,7 +44,7 @@ public class UserController {
         this.userService = userService;
     }
     
-    @PostMapping("/login")
+    @PostMapping("/login") // need base url auth
     public ResponseEntity<?> loginUser(@RequestBody UserLoginDTO loginDto) {
         String email = loginDto.getEmail();
         String password = loginDto.getPassword();
@@ -80,5 +89,27 @@ public class UserController {
     public UserDTO getUser(@RequestBody UserCreateDTO userCreateDTO) {
         UserDTO saved = userService.save(userCreateDTO);
         return saved ;
+    }
+    @GetMapping
+    public List<UserDTO> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+
+    @PostMapping
+    public UserDTO createUser(@RequestBody UserCreateDTO dto) {
+        return userService.createUser(dto);
+    }
+
+
+    @PutMapping("/{id}")
+    public UserDTO updateUser(@PathVariable Integer id, @RequestBody UserUpdateDTO dto) {
+        return userService.updateUser(id, dto);
+    }
+
+
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable Integer id) {
+        userService.deleteUser(id);
     }
 }

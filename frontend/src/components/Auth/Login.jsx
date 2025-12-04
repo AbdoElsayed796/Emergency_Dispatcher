@@ -25,7 +25,7 @@ export default function Login() {
         try {
             setLoading(true);
             setError('');
-            const response = await axios.post(`${API_BASE_URL}/auth/login`, formData);
+            const response = await axios.post(`${API_BASE_URL}/api/users/login`, formData);
             console.log(response.data);
             if (response.data.success) {
                 setSuccessMessage('Login successful! Redirecting...');
@@ -36,13 +36,13 @@ export default function Login() {
                     const userRole = response.data.user.role;
                     switch (userRole) {
                         case 'DISPATCHER':
-                            navigate('/dispatcher/dashboard');
+                            navigate('/dispatcher');
                             break;
                         case 'RESPONDER':
-                            navigate('/responder/dashboard');
+                            navigate('/responder');
                             break;
                         case 'ADMIN':
-                            navigate('/admin/dashboard');
+                            navigate('/admin');
                             break;
                         default:
                             navigate('/');

@@ -8,6 +8,9 @@ import smartemergencydispatcher.model.enums.StationType;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Getter
+@Setter
 public class StationCreateDTO {
     private StationType type;
     private String name;

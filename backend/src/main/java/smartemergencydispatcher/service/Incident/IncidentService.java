@@ -17,6 +17,7 @@ public interface IncidentService {
     void deleteById(Integer id);
     IncidentDTO save(IncidentCreateDTO incidentCreateDTO);
     IncidentDTO updateIncident( Integer id, IncidentDTO incidentDTO);
+    List<IncidentDTO> getActiveIncidents();
     public List<IncidentDTO> getAllIncidents();
     public IncidentDTO updateIncidentStatus(Integer id, IncidentStatusUpdateDTO statusUpdateDTO);
 }
