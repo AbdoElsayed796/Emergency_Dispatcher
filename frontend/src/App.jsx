@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Router } from "react-router-dom";
 import Login from './components/Auth/Login';
+import Incident from './components/Incident/Incident';
 import './App.css'
 
 
@@ -10,6 +11,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path='/' element={<Incident />}></Route>
         <Route path="/login" element={<Login />}> </Route>
       </Routes>
       

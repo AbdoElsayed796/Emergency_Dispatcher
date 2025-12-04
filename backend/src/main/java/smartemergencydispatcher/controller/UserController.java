@@ -37,7 +37,6 @@ public class UserController {
     
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody UserLoginDTO loginDto) {
-        System.out.println("your order has arrived");
         String email = loginDto.getEmail();
         String password = loginDto.getPassword();
         UserDTO userDto = userService.getUserByEmail(email, password);

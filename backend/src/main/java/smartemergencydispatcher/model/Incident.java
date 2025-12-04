@@ -3,6 +3,8 @@ package smartemergencydispatcher.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import smartemergencydispatcher.model.enums.IncidentStatus;
 import smartemergencydispatcher.model.enums.IncidentType;
 import smartemergencydispatcher.model.enums.SeverityLevel;
@@ -36,5 +38,6 @@ public class Incident {
     private LocalDateTime reportedTime;
 
     @Column(nullable = false, columnDefinition = "POINT")
+    @JdbcTypeCode(SqlTypes.GEOMETRY)
     private Point location;
 }
