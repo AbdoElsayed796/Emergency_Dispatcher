@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/incidents")
+@RequestMapping("/api/admin/incidents")
+// @RequestMapping("/incidents")
 @CrossOrigin(origins = "http://localhost:5173")
 public class IncidentController {
     private final IncidentService incidentService;
@@ -58,5 +59,10 @@ public class IncidentController {
     @PutMapping("/update/{id}")
     public IncidentDTO updateIncident(@PathVariable Integer id, @RequestBody IncidentDTO incidentDTO) {
         return incidentService.updateIncident(id, incidentDTO);
+    }
+    @GetMapping("/active")
+    public ResponseEntity<List<IncidentDTO>> getActiveIncidents() {
+        List<IncidentDTO> activeIncidents = incidentService.getActiveIncidents();
+        return ResponseEntity.ok(activeIncidents);
     }
 }

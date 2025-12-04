@@ -8,7 +8,7 @@ import smartemergencydispatcher.model.enums.VehicleStatus;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-class VehicleUpdateDTO {
+public class VehicleUpdateDTO {
     private VehicleStatus status;
     private Integer capacity;
     private LocationDTO location;
