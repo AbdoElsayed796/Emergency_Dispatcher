@@ -21,13 +21,14 @@ import java.util.stream.Collectors;
 public class StationServiceImpl implements StationService {
 
     private final StationRepository stationRepository;
+    private final StationMapper stationMapper;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Override
     public List<StationDTO> getAllStations() {
         return stationRepository.findAll()
                 .stream()
-                .map(this::mapToDTO)
+                .map(stationMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -39,7 +40,7 @@ public class StationServiceImpl implements StationService {
         station.setPhone(dto.getPhone());
         station.setLocation(convertToPoint(dto.getLocation()));
 
-        return mapToDTO(stationRepository.save(station));
+        return stationMapper.toDTO(stationRepository.save(station));
     }
 
     @Override
@@ -52,7 +53,7 @@ public class StationServiceImpl implements StationService {
         station.setPhone(dto.getPhone());
         station.setLocation(convertToPoint(dto.getLocation()));
 
-        return mapToDTO(stationRepository.save(station));
+        return stationMapper.toDTO(stationRepository.save(station));
     }
 
     @Override
@@ -62,10 +63,5 @@ public class StationServiceImpl implements StationService {
 
     private Point convertToPoint(LocationDTO dto) {
         return geometryFactory.createPoint(new Coordinate(dto.getLongitude(), dto.getLatitude()));
-    }
-
-    private StationDTO mapToDTO(Station station) {
-        StationMapper stationMapper = new StationMapper();
-        return stationMapper.toDTO(station);
     }
 }
