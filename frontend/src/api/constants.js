@@ -44,6 +44,7 @@ export const INCIDENT_ENDPOINTS = {
   GET_BY_ID: (id) => `/incidents/${id}`,
   CREATE: '/incidents/create',
   UPDATE: (id) => `/incidents/${id}`,
+  UPDATE_STATUS: (id) => `/incidents/${id}/status`,
   DELETE: (id) => `/incidents/${id}`,
   GET_BY_STATUS: (status) => `/incidents/status/${status}`,
   GET_BY_SEVERITY: (severity) => `/incidents/severity/${severity}`,

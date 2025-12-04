@@ -1,4 +1,4 @@
-export { default as userService } from './userService';
+export { default as userService } from './userServices';
 export { default as stationService } from './stationService';
 export { default as vehicleService } from './vehicleService';
 export { default as incidentService } from './incidentService';

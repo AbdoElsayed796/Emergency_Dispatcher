@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config';
+import { API_BASE_URL } from '../config';
 
 /**
  * Authentication Service
@@ -25,7 +25,6 @@ class LoginService {
       throw new Error('Password is required');
     }
 
-    try {
       const response = await fetch(`${this.baseURL}/users/signin`, {
         method: 'POST',
         headers: {
@@ -49,9 +48,6 @@ class LoginService {
       this.setUser(data.user);
 
       return data;
-    } catch (error) {
-      throw error;
-    }
   }
 
   /**

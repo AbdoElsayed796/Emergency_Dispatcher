@@ -4,6 +4,7 @@ package smartemergencydispatcher.mapper;
 import org.locationtech.jts.geom.*;
 import org.springframework.stereotype.Component;
 import smartemergencydispatcher.dto.locationDTO.LocationDTO;
+import smartemergencydispatcher.dto.vehicledto.AvailableVehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleCreateDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleDTO;
 import smartemergencydispatcher.model.Station;
@@ -19,6 +20,19 @@ public class VehicleMapper {
                 vehicle.getId(),
                 vehicle.getType(),
                 vehicle.getStatus(),
+                vehicle.getCapacity(),
+                pointToLocation(vehicle.getLocation()),
+                vehicle.getStation().getId(),
+                vehicle.getStation().getName(),
+                vehicle.getResponder().getId(),
+                vehicle.getResponder().getName()
+        );
+    }
+
+    public AvailableVehicleDTO toAvailableDTO(Vehicle vehicle) {
+        return new AvailableVehicleDTO(
+                vehicle.getId(),
+                vehicle.getType(),
                 vehicle.getCapacity(),
                 pointToLocation(vehicle.getLocation()),
                 vehicle.getStation().getId(),

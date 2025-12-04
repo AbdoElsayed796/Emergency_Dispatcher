@@ -3,6 +3,8 @@ package smartemergencydispatcher.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import smartemergencydispatcher.model.enums.StationType;
 import org.locationtech.jts.geom.Point;
 
@@ -28,5 +30,6 @@ public class Station {
     private String phone;
 
     @Column(nullable = false, columnDefinition = "POINT")
+    @JdbcTypeCode(SqlTypes.GEOMETRY)
     private Point location;
 }

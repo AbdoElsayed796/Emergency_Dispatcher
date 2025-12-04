@@ -1,6 +1,15 @@
 CREATE DATABASE IF NOT EXISTS smart_emergency_dispatcher;
 USE smart_emergency_dispatcher;
 
+
+-- Drop tables in reverse order of dependencies (child tables first)
+DROP TABLE IF EXISTS assignment;
+DROP TABLE IF EXISTS vehicle;
+DROP TABLE IF EXISTS incident;
+DROP TABLE IF EXISTS station;
+DROP TABLE IF EXISTS user;
+
+
 CREATE TABLE IF NOT EXISTS user (
 	id INT PRIMARY KEY AUTO_INCREMENT,
 	name VARCHAR(64) NOT NULL,
@@ -51,3 +60,34 @@ CREATE TABLE IF NOT EXISTS assignment (
 	FOREIGN KEY (vehicle_id) REFERENCES vehicle(id),
 	FOREIGN KEY (dispatcher_user_id) REFERENCES user(id)
 );
+
+
+-- 1. Users first
+INSERT INTO user (name, email, password, phone, role)
+VALUES 
+('Fire Captain Tom', 'tom.fire@emergency.com', 'responder123', '+1444444444', 'RESPONDER'),
+('Paramedic Lisa', 'lisa.medical@emergency.com', 'responder123', '+1555555555', 'RESPONDER'),
+('Officer Rodriguez', 'rodriguez.police@emergency.com', 'responder123', '+1666666666', 'RESPONDER'),
+('Dispatcher Sarah', 'sarah@emergency.com', 'dispatcher123', '+1777777777', 'DISPATCHER');
+
+-- 2. Stations second
+INSERT INTO station (type, name, phone, location)
+VALUES 
+('FIRE', 'Central Fire Station', '+1999111001', POINT(40.7128, -74.0060)),
+('MEDICAL', 'City Medical Center', '+1999111002', POINT(40.7580, -73.9855)),
+('POLICE', 'Downtown Police Station', '+1999111003', POINT(40.7489, -73.9680));
+
+-- 3. Vehicles third (after users and stations exist)
+INSERT INTO vehicle (type, status, capacity, location, station_id, responder_user_id)
+VALUES 
+('FIRE', 'AVAILABLE', 6, POINT(40.7128, -74.0060), 1, 1),
+('MEDICAL', 'AVAILABLE', 2, POINT(40.7580, -73.9855), 2, 2),
+('POLICE', 'AVAILABLE', 2, POINT(40.7489, -73.9680), 3, 3),
+('POLICE', 'AVAILABLE', 6, POINT(40.7489, 73.9680), 2, 3);
+
+-- 4. Incidents (independent, can be inserted anytime)
+INSERT INTO incident (type, severity_level, status, reported_time, location)
+VALUES 
+('FIRE', 'HIGH', 'ASSIGNED', NOW(), POINT(40.7489, -73.9680)),
+('MEDICAL', 'CRITICAL', 'RESOLVED', NOW(), POINT(40.7580, -73.9855)),
+('POLICE', 'MEDIUM', 'REPORTED', NOW(), POINT(40.7614, -73.9776));
