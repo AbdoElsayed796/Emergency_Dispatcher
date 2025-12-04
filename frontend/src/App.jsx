@@ -4,7 +4,6 @@ import Login from './components/Auth/Login';
 import Incident from './components/Incident/Incident';
 import './App.css'
 import DispatcherDashboard from "./views/Dispatcher/DispatcherDashboard.jsx";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
 function App() {

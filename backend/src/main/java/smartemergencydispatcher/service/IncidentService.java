@@ -29,7 +29,7 @@ public class IncidentService {
 
     @Transactional
     public IncidentDTO updateIncidentStatus(Integer id, IncidentStatusUpdateDTO statusUpdateDTO){
-        Incident incident = incidentRepository.findIncidentById(id)
+        Incident incident = incidentRepository.getIncidentById(id)
                 .orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
 
         incident.setStatus(statusUpdateDTO.getStatus());

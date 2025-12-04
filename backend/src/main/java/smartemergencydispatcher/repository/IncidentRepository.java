@@ -17,16 +17,12 @@ import smartemergencydispatcher.model.enums.SeverityLevel;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-@Repository
-import java.util.List;
 import java.util.Optional;
-
 
 @Repository
 public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     @Query("SELECT i FROM Incident i WHERE i.id = :id")
-    Incident getIncidentById(@Param("id") Integer id);
+    Optional<Incident> getIncidentById(@Param("id") Integer id);
 
     @Query("SELECT i From Incident i WHERE i.status = :status")
     List<Incident> getIncidentByStatus(@Param("status") IncidentStatus status);

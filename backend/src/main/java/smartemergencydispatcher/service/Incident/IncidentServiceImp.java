@@ -1,9 +1,11 @@
 package smartemergencydispatcher.service.Incident;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.incidentdto.IncidentCreateDTO;
 import smartemergencydispatcher.dto.incidentdto.IncidentDTO;
+import smartemergencydispatcher.dto.incidentdto.IncidentStatusUpdateDTO;
 import smartemergencydispatcher.mapper.IncidentMapper;
 import smartemergencydispatcher.model.Incident;
 import smartemergencydispatcher.model.enums.IncidentStatus;
@@ -14,6 +16,8 @@ import smartemergencydispatcher.repository.IncidentRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class IncidentServiceImp implements IncidentService{
     private final IncidentRepository incidentRepository;
@@ -25,7 +29,7 @@ public class IncidentServiceImp implements IncidentService{
     }
     @Override
     public IncidentDTO getIncidentById(Integer id) {
-        Incident incident = incidentRepository.getIncidentById(id);
+        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));;
         return incidentMapper.toDTO(incident);
     }
 
@@ -99,7 +103,7 @@ public class IncidentServiceImp implements IncidentService{
 
     @Override
     public IncidentDTO updateIncident(Integer id, IncidentDTO incidentDTO) {
-        Incident incident = incidentRepository.getIncidentById(id);
+        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));;
         if (incident == null) {
             return new IncidentDTO();
         }
@@ -112,5 +116,21 @@ public class IncidentServiceImp implements IncidentService{
         Incident updated = incidentRepository.updateIncident(id, incident.getStatus(), incident.getSeverityLevel());
         return incidentMapper.toDTO(updated);
 
+    }
+    public List<IncidentDTO> getAllIncidents(){
+        List<Incident> incidents = incidentRepository.findAllIncidents();
+        return incidents.stream().map(incidentMapper::toDTO).collect(Collectors.toList());
+    }
+
+
+    @Transactional
+    public IncidentDTO updateIncidentStatus(Integer id, IncidentStatusUpdateDTO statusUpdateDTO){
+        Incident incident = incidentRepository.getIncidentById(id)
+                .orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
+
+        incident.setStatus(statusUpdateDTO.getStatus());
+        Incident updatedIncident = incidentRepository.save(incident);
+
+        return incidentMapper.toDTO(updatedIncident);
     }
 }

@@ -31,7 +31,7 @@ public class AssignmentService {
 
     @Transactional
     public Assignment assignVehicleToIncident(AssignmentCreateDTO assignmentCreateDTO){
-        Incident incident = incidentRepository.findIncidentById(assignmentCreateDTO.getIncidentId())
+        Incident incident = incidentRepository.getIncidentById(assignmentCreateDTO.getIncidentId())
                 .orElseThrow(() -> new RuntimeException("Incident not found with id: "
                         + assignmentCreateDTO.getIncidentId()));
 
