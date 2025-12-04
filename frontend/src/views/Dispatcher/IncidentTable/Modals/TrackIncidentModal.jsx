@@ -32,10 +32,8 @@ const TrackIncidentModal = ({
     };
 
     // Handle marking incident as resolved
-    const handleMarkResolved = () => {
-        if (window.confirm('Are you sure you want to mark this incident as resolved?')) {
+    const handleMarkResolved = () => {  
             onStatusUpdate('RESOLVED');
-        }
     };
 
     return (

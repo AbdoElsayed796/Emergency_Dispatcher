@@ -122,7 +122,7 @@ class IncidentService {
   }
 
   async updateStatus(id, status) {
-      return await apiClient.patch(INCIDENT_ENDPOINTS.UPDATE_STATUS(id), { status });
+      return await apiClient.patch(INCIDENT_ENDPOINTS.UPDATE_STATUS(id), { status }.status);
   }
 }
 

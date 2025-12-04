@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import IncidentFilters from './IncidentFilters.jsx';
 import IncidentsList from './IncidentsList.jsx';
-import AssignVehicleModal from './modals/AssignVehicleModal.jsx';
-import TrackIncidentModal from './modals/TrackIncidentModal.jsx';
-import IncidentDetailsModal from './modals/IncidentDetailsModal.jsx';
+import AssignVehicleModal from './Modals/AssignVehicleModal.jsx';
+import TrackIncidentModal from './Modals/TrackIncidentModal.jsx';
+import IncidentDetailsModal from './Modals/IncidentDetailsModal.jsx';
 import { vehicleService, incidentService, assignmentService } from '../../../api/services/index.js';
 
 const IncidentsTable = ({
@@ -86,7 +86,6 @@ const IncidentsTable = ({
         try {
             console.log(`Updating incident ${selectedIncident.id} status to ${newStatus}`);
 
-            // Call backend API to update incident status
             await incidentService.updateStatus(selectedIncident.id, { status: newStatus });
 
             // Refresh data after status update
