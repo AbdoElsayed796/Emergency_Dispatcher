@@ -6,7 +6,6 @@ import smartemergencydispatcher.dto.incidentdto.IncidentDTO;
 import smartemergencydispatcher.mapper.IncidentMapper;
 import smartemergencydispatcher.model.Incident;
 import smartemergencydispatcher.repository.IncidentRepository;
-import smartemergencydispatcher.service.IncidentService.IncidentService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,7 +15,8 @@ import java.util.stream.Collectors;
 public class IncidentServiceImpl implements IncidentService {
 
     private final IncidentRepository incidentRepository;
-    IncidentMapper incidentMapper = new IncidentMapper();
+    private final IncidentMapper incidentMapper;
+
     @Override
     public List<IncidentDTO> getActiveIncidents() {
         return incidentRepository.findByStatusActive()
