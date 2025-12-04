@@ -63,4 +63,6 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
             @Param("to") LocalDateTime to
     );
 
+    List<Assignment> findAllAssignmentsByVehicleId(Integer vehicleId);
+
 }
