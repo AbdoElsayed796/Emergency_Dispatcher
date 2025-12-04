@@ -6,7 +6,10 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-class UserLoginDTO {
+@Getter
+@Setter
+@Builder
+public class UserLoginDTO {
     private String email;
     private String password;
 }

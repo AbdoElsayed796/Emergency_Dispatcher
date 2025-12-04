@@ -36,6 +36,7 @@ const UtilizationReports = () => {
     setLoading(true);
 
     try {
+      console.log(`${API_URL}?vehicle=${selectedVehicle}&from=${startDate}&to=${endDate}`);
       const response = await fetch(
         `${API_URL}?vehicle=${selectedVehicle}&from=${startDate}&to=${endDate}`,
         {
@@ -47,6 +48,8 @@ const UtilizationReports = () => {
       if (!response.ok) throw new Error("Failed to fetch report data");
 
       const data = await response.json();
+
+      console.log(response);
       setReportData(data);
       setShowResults(true);
     } catch (err) {

@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
+@Builder
 public class IncidentDTO {
     private Integer id;
     private IncidentType type;

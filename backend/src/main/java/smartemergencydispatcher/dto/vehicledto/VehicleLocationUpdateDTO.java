@@ -8,6 +8,6 @@ import smartemergencydispatcher.dto.locationDTO.LocationDTO;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-class VehicleLocationUpdateDTO {
+public class VehicleLocationUpdateDTO {
     private LocationDTO location;
 }

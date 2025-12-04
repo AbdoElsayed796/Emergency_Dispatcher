@@ -36,6 +36,7 @@ const ResponseTimeReports = () => {
     setLoading(true);
 
     try {
+      console.log(`${API_URL}?type=${selectedType}&from=${startDate}&to=${endDate}`);
       const response = await fetch(
         `${API_URL}?type=${selectedType}&from=${startDate}&to=${endDate}`,
         {
@@ -47,8 +48,9 @@ const ResponseTimeReports = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch report data");
       }
-
+      
       const data = await response.json();
+      console.log(response);
       setReportData(data);
       setShowResults(true);
     } catch (error) {

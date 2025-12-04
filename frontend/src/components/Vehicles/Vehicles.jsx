@@ -12,12 +12,12 @@ const Vehicles = () => {
     type: 'FIRE',
     status: 'AVAILABLE',
     capacity: 4,
-    location: '0,0',
-    station_id: '',
-    responder_user_id: ''
+    location: { latitude: 0, longitude: 0 },
+    stationId: null,
+    responderId: null
   });
 
-  const API_URL = 'http://localhost:8080/api'; // Update with your backend URL
+  const API_URL = 'http://localhost:8080/api';
 
   useEffect(() => {
     fetchData();
@@ -30,12 +30,25 @@ const Vehicles = () => {
         fetch(`${API_URL}/stations`),
         fetch(`${API_URL}/users`)
       ]);
-      
+
       const vehiclesData = await vehiclesRes.json();
       const stationsData = await stationsRes.json();
       const usersData = await usersRes.json();
       
-      setVehicles(vehiclesData);
+      console.log('Vehicles data:', vehiclesData); // Debug log
+      
+      // Add locationText for editable display
+      const formattedVehicles = vehiclesData.map(v => ({
+        ...v,
+        locationText: `${v.location.latitude},${v.location.longitude}`,
+        // Map backend fields to what your table expects
+        station_id: v.stationId, // For display
+        station_name: v.stationName, // For display
+        responder_user_id: v.responderId, // For display
+        responder_name: v.responderName // For display
+      }));
+
+      setVehicles(formattedVehicles);
       setStations(stationsData);
       setResponders(usersData.filter(u => u.role === 'RESPONDER'));
       setLoading(false);
@@ -46,20 +59,58 @@ const Vehicles = () => {
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    if (name === 'capacity') {
+      setFormData({ ...formData, [name]: parseInt(value) || 0 });
+    } else if (name === 'stationId' || name === 'responderId') {
+      setFormData({ ...formData, [name]: value ? parseInt(value) : null });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleLocationInput = (e) => {
+    const [lat, lng] = e.target.value.split(',');
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        latitude: parseFloat(lat) || 0,
+        longitude: parseFloat(lng) || 0
+      }
+    }));
   };
 
   const handleAdd = async () => {
+    const payload = {
+      ...formData,
+      stationId: formData.stationId,
+      responderId: formData.responderId
+    };
+    
+    console.log('Sending payload:', payload);
+    
     try {
       const response = await fetch(`${API_URL}/vehicles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
+      
       if (response.ok) {
         fetchData();
         setShowAddForm(false);
-        setFormData({ type: 'FIRE', status: 'AVAILABLE', capacity: 4, location: '0,0', station_id: '', responder_user_id: '' });
+        setFormData({ 
+          type: 'FIRE', 
+          status: 'AVAILABLE', 
+          capacity: 4, 
+          location: { latitude: 0, longitude: 0 }, 
+          stationId: null, 
+          responderId: null 
+        });
+      } else {
+        const errorText = await response.text();
+        console.error('Server error:', errorText);
       }
     } catch (error) {
       console.error('Error adding vehicle:', error);
@@ -67,16 +118,33 @@ const Vehicles = () => {
   };
 
   const handleUpdate = async (id) => {
+    const vehicle = vehicles.find(v => v.id === id);
+    
+    // Prepare update payload - use the original backend field names
+    const updatedBody = {
+      id: vehicle.id,
+      type: vehicle.type,
+      status: vehicle.status,
+      capacity: vehicle.capacity,
+      location: vehicle.location,
+      stationId: vehicle.station_id, // Use the mapped field
+      responderId: vehicle.responder_user_id // Use the mapped field
+    };
+    
+    console.log('Updating with:', updatedBody);
+    
     try {
-      const vehicle = vehicles.find(v => v.id === id);
       const response = await fetch(`${API_URL}/vehicles/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(vehicle)
+        body: JSON.stringify(updatedBody)
       });
       if (response.ok) {
         setEditingId(null);
         fetchData();
+      } else {
+        const errorText = await response.text();
+        console.error('Update error:', errorText);
       }
     } catch (error) {
       console.error('Error updating vehicle:', error);
@@ -86,20 +154,32 @@ const Vehicles = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this vehicle?')) return;
     try {
-      const response = await fetch(`${API_URL}/vehicles/${id}`, {
-        method: 'DELETE'
-      });
-      if (response.ok) {
-        fetchData();
-      }
+      const response = await fetch(`${API_URL}/vehicles/${id}`, { method: 'DELETE' });
+      if (response.ok) fetchData();
     } catch (error) {
       console.error('Error deleting vehicle:', error);
     }
   };
 
   const updateVehicleField = (id, field, value) => {
-    setVehicles(vehicles.map(vehicle => 
+    setVehicles(vehicles.map(vehicle =>
       vehicle.id === id ? { ...vehicle, [field]: value } : vehicle
+    ));
+  };
+
+  const updateLocationField = (id, textValue) => {
+    const [lat, lng] = textValue.split(',');
+    setVehicles(vehicles.map(vehicle =>
+      vehicle.id === id
+        ? {
+            ...vehicle,
+            locationText: textValue,
+            location: {
+              latitude: parseFloat(lat) || 0,
+              longitude: parseFloat(lng) || 0
+            }
+          }
+        : vehicle
     ));
   };
 
@@ -122,9 +202,7 @@ const Vehicles = () => {
     return colors[type] || 'bg-gray-100 text-gray-700';
   };
 
-  if (loading) {
-    return <div className="text-center py-12">Loading vehicles...</div>;
-  }
+  if (loading) return <div className="text-center py-12">Loading vehicles...</div>;
 
   return (
     <div>
@@ -143,84 +221,35 @@ const Vehicles = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4">Add New Vehicle</h3>
           <div className="grid grid-cols-2 gap-4">
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
+            <select name="type" value={formData.type} onChange={handleInputChange} className="px-4 py-2 border rounded-lg">
               <option value="FIRE">Fire</option>
               <option value="POLICE">Police</option>
               <option value="MEDICAL">Medical</option>
             </select>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
+            <select name="status" value={formData.status} onChange={handleInputChange} className="px-4 py-2 border rounded-lg">
               <option value="AVAILABLE">Available</option>
               <option value="ON_ROUTE">On Route</option>
               <option value="BUSY">Busy</option>
               <option value="MAINTENANCE">Maintenance</option>
             </select>
-            <input
-              type="number"
-              name="capacity"
-              placeholder="Capacity"
-              value={formData.capacity}
-              onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              name="location"
-              placeholder="Location (lat,lng)"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <select
-              name="station_id"
-              value={formData.station_id}
-              onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
+            <input type="number" name="capacity" placeholder="Capacity" value={formData.capacity} onChange={handleInputChange} className="px-4 py-2 border rounded-lg" />
+            <input type="text" placeholder="lat,lng" value={`${formData.location.latitude},${formData.location.longitude}`} onChange={handleLocationInput} className="px-4 py-2 border rounded-lg" />
+            <select name="stationId" value={formData.stationId || ''} onChange={handleInputChange} className="px-4 py-2 border rounded-lg">
               <option value="">Select Station</option>
-              {stations.map(station => (
-                <option key={station.id} value={station.id}>
-                  {station.name} ({station.type})
-                </option>
-              ))}
+              {stations.map(station => <option key={station.id} value={station.id}>{station.name}</option>)}
             </select>
-            <select
-              name="responder_user_id"
-              value={formData.responder_user_id}
-              onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
+            <select name="responderId" value={formData.responderId || ''} onChange={handleInputChange} className="px-4 py-2 border rounded-lg">
               <option value="">Select Responder</option>
-              {responders.map(responder => (
-                <option key={responder.id} value={responder.id}>
-                  {responder.name}
-                </option>
-              ))}
+              {responders.map(responder => <option key={responder.id} value={responder.id}>{responder.name}</option>)}
             </select>
           </div>
+
           <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleAdd}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              <Save className="w-4 h-4" />
-              Save
+            <button onClick={handleAdd} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg">
+              <Save className="w-4 h-4" /> Save
             </button>
-            <button
-              onClick={() => setShowAddForm(false)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-            >
-              <X className="w-4 h-4" />
-              Cancel
+            <button onClick={() => setShowAddForm(false)} className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">
+              <X className="w-4 h-4" /> Cancel
             </button>
           </div>
         </div>
@@ -236,6 +265,7 @@ const Vehicles = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capacity</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Station</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responder</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -245,126 +275,99 @@ const Vehicles = () => {
                 <td className="px-6 py-4 text-sm text-gray-900">{vehicle.id}</td>
                 <td className="px-6 py-4">
                   {editingId === vehicle.id ? (
-                    <select
-                      value={vehicle.type}
-                      onChange={(e) => updateVehicleField(vehicle.id, 'type', e.target.value)}
-                      className="px-2 py-1 border rounded"
-                    >
+                    <select value={vehicle.type} onChange={(e) => updateVehicleField(vehicle.id, 'type', e.target.value)} className="px-2 py-1 border rounded w-24">
                       <option value="FIRE">Fire</option>
                       <option value="POLICE">Police</option>
                       <option value="MEDICAL">Medical</option>
                     </select>
                   ) : (
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getTypeBadgeColor(vehicle.type)}`}>
-                      {vehicle.type}
-                    </span>
+                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getTypeBadgeColor(vehicle.type)}`}>{vehicle.type}</span>
                   )}
                 </td>
                 <td className="px-6 py-4">
                   {editingId === vehicle.id ? (
-                    <select
-                      value={vehicle.status}
-                      onChange={(e) => updateVehicleField(vehicle.id, 'status', e.target.value)}
-                      className="px-2 py-1 border rounded"
-                    >
+                    <select value={vehicle.status} onChange={(e) => updateVehicleField(vehicle.id, 'status', e.target.value)} className="px-2 py-1 border rounded w-28">
                       <option value="AVAILABLE">Available</option>
                       <option value="ON_ROUTE">On Route</option>
                       <option value="BUSY">Busy</option>
                       <option value="MAINTENANCE">Maintenance</option>
                     </select>
                   ) : (
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>
-                      {vehicle.status}
-                    </span>
+                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(vehicle.status)}`}>{vehicle.status}</span>
                   )}
                 </td>
                 <td className="px-6 py-4">
                   {editingId === vehicle.id ? (
-                    <input
-                      type="number"
-                      value={vehicle.capacity}
-                      onChange={(e) => updateVehicleField(vehicle.id, 'capacity', e.target.value)}
-                      className="px-2 py-1 border rounded w-20"
-                    />
+                    <input type="number" value={vehicle.capacity} onChange={(e) => updateVehicleField(vehicle.id, 'capacity', parseInt(e.target.value) || 0)} className="px-2 py-1 border rounded w-16" />
                   ) : (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="w-4 h-4" />
-                      {vehicle.capacity}
+                      <Users className="w-4 h-4" /> {vehicle.capacity}
                     </div>
                   )}
                 </td>
                 <td className="px-6 py-4">
                   {editingId === vehicle.id ? (
-                    <select
-                      value={vehicle.station_id}
-                      onChange={(e) => updateVehicleField(vehicle.id, 'station_id', e.target.value)}
-                      className="px-2 py-1 border rounded"
-                    >
-                      {stations.map(station => (
-                        <option key={station.id} value={station.id}>
-                          {station.name}
-                        </option>
-                      ))}
+                    <select value={vehicle.station_id || ''} onChange={(e) => updateVehicleField(vehicle.id, 'station_id', e.target.value ? parseInt(e.target.value) : null)} className="px-2 py-1 border rounded w-36">
+                      <option value="">Select Station</option>
+                      {stations.map(station => <option key={station.id} value={station.id}>{station.name}</option>)}
                     </select>
                   ) : (
                     <span className="text-sm text-gray-600">
-                      {stations.find(s => s.id === vehicle.station_id)?.name || 'N/A'}
+                      {vehicle.station_name || stations.find(s => s.id === vehicle.station_id)?.name || 'N/A'}
                     </span>
                   )}
                 </td>
                 <td className="px-6 py-4">
                   {editingId === vehicle.id ? (
-                    <select
-                      value={vehicle.responder_user_id}
-                      onChange={(e) => updateVehicleField(vehicle.id, 'responder_user_id', e.target.value)}
-                      className="px-2 py-1 border rounded"
-                    >
-                      {responders.map(responder => (
-                        <option key={responder.id} value={responder.id}>
-                          {responder.name}
-                        </option>
-                      ))}
+                    <select value={vehicle.responder_user_id || ''} onChange={(e) => updateVehicleField(vehicle.id, 'responder_user_id', e.target.value ? parseInt(e.target.value) : null)} className="px-2 py-1 border rounded w-32">
+                      <option value="">Select Responder</option>
+                      {responders.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                     </select>
                   ) : (
                     <span className="text-sm text-gray-600">
-                      {responders.find(r => r.id === vehicle.responder_user_id)?.name || 'N/A'}
+                      {vehicle.responder_name || responders.find(r => r.id === vehicle.responder_user_id)?.name || 'N/A'}
                     </span>
                   )}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    {editingId === vehicle.id ? (
-                      <>
-                        <button
-                          onClick={() => handleUpdate(vehicle.id)}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
-                        >
-                          <Save className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => setEditingId(vehicle.id)}
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(vehicle.id)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  {editingId === vehicle.id ? (
+                    <input type="text" value={vehicle.locationText} onChange={(e) => updateLocationField(vehicle.id, e.target.value)} className="px-2 py-1 border rounded w-36" />
+                  ) : (
+                    <span className="text-sm text-gray-600">{vehicle.locationText}</span>
+                  )}
+                </td>
+                <td className="px-6 py-4">
+                  {editingId === vehicle.id ? (
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleUpdate(vehicle.id)} 
+                        className="inline-flex items-center justify-center w-8 h-8 text-green-600 bg-white hover:bg-green-50 rounded border border-gray-300"
+                      >
+                        <Save className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => setEditingId(null)} 
+                        className="inline-flex items-center justify-center w-8 h-8 text-red-600 bg-white hover:bg-red-50 rounded border border-gray-300"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setEditingId(vehicle.id)} 
+                        className="inline-flex items-center justify-center w-8 h-8 text-blue-600 bg-white hover:bg-blue-50 rounded border border-gray-300"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(vehicle.id)} 
+                        className="inline-flex items-center justify-center w-8 h-8 text-red-600 bg-white hover:bg-red-50 rounded border border-gray-300"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

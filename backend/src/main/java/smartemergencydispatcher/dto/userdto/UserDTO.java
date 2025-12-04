@@ -6,6 +6,9 @@ import smartemergencydispatcher.model.enums.Role;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
+@Builder
 public class UserDTO {
     private Integer id;
     private String name;

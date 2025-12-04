@@ -6,14 +6,15 @@ const Stations = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+
   const [formData, setFormData] = useState({
     type: 'FIRE',
     name: '',
     phone: '',
-    location: '0,0'
+    location: { latitude: 0, longitude: 0 }
   });
 
-  const API_URL = 'http://localhost:8080/api'; // Update with your backend URL
+  const API_URL = 'http://localhost:8080/api';
 
   useEffect(() => {
     fetchStations();
@@ -23,7 +24,14 @@ const Stations = () => {
     try {
       const response = await fetch(`${API_URL}/stations`);
       const data = await response.json();
-      setStations(data);
+
+      // Convert backend format to displayable format
+      const formatted = data.map(st => ({
+        ...st,
+        locationText: `${st.location.latitude},${st.location.longitude}`
+      }));
+
+      setStations(formatted);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching stations:', error);
@@ -32,7 +40,18 @@ const Stations = () => {
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleLocationInput = (e) => {
+    const [lat, lng] = e.target.value.split(',');
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        latitude: parseFloat(lat) || 0,
+        longitude: parseFloat(lng) || 0
+      }
+    }));
   };
 
   const handleAdd = async () => {
@@ -42,24 +61,62 @@ const Stations = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
+
       if (response.ok) {
         fetchStations();
         setShowAddForm(false);
-        setFormData({ type: 'FIRE', name: '', phone: '', location: '0,0' });
+        setFormData({
+          type: 'FIRE',
+          name: '',
+          phone: '',
+          location: { latitude: 0, longitude: 0 }
+        });
       }
     } catch (error) {
       console.error('Error adding station:', error);
     }
   };
 
+  const updateStationField = (id, field, value) => {
+    setStations(stations.map(station =>
+      station.id === id ? { ...station, [field]: value } : station
+    ));
+  };
+
+  const updateLocationField = (id, textValue) => {
+    const [lat, lng] = textValue.split(',');
+    setStations(stations.map(station =>
+      station.id === id
+        ? {
+            ...station,
+            locationText: textValue,
+            location: {
+              latitude: parseFloat(lat) || 0,
+              longitude: parseFloat(lng) || 0
+            }
+          }
+        : station
+    ));
+  };
+
   const handleUpdate = async (id) => {
+    const station = stations.find(s => s.id === id);
+
+    const updatedBody = {
+      id: station.id,
+      type: station.type,
+      name: station.name,
+      phone: station.phone,
+      location: station.location
+    };
+
     try {
-      const station = stations.find(s => s.id === id);
       const response = await fetch(`${API_URL}/stations/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(station)
+        body: JSON.stringify(updatedBody)
       });
+
       if (response.ok) {
         setEditingId(null);
         fetchStations();
@@ -71,6 +128,7 @@ const Stations = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this station?')) return;
+
     try {
       const response = await fetch(`${API_URL}/stations/${id}`, {
         method: 'DELETE'
@@ -81,12 +139,6 @@ const Stations = () => {
     } catch (error) {
       console.error('Error deleting station:', error);
     }
-  };
-
-  const updateStationField = (id, field, value) => {
-    setStations(stations.map(station => 
-      station.id === id ? { ...station, [field]: value } : station
-    ));
   };
 
   const getTypeBadgeColor = (type) => {
@@ -113,6 +165,7 @@ const Stations = () => {
 
   return (
     <div>
+      {/* ADD STATION HEADER */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Stations Management</h2>
         <button
@@ -124,6 +177,7 @@ const Stations = () => {
         </button>
       </div>
 
+      {/* ADD FORM */}
       {showAddForm && (
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4">Add New Station</h3>
@@ -132,48 +186,52 @@ const Stations = () => {
               name="type"
               value={formData.type}
               onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border rounded-lg"
             >
               <option value="FIRE">Fire Station</option>
               <option value="POLICE">Police Station</option>
               <option value="MEDICAL">Medical Station</option>
             </select>
+
             <input
               type="text"
               name="name"
               placeholder="Station Name"
               value={formData.name}
               onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border rounded-lg"
             />
+
             <input
               type="tel"
               name="phone"
               placeholder="Phone Number"
               value={formData.phone}
               onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border rounded-lg"
             />
+
             <input
               type="text"
-              name="location"
-              placeholder="Location (lat,lng)"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="lat,lng"
+              value={`${formData.location.latitude},${formData.location.longitude}`}
+              onChange={handleLocationInput}
+              className="px-4 py-2 border rounded-lg"
             />
           </div>
+
           <div className="flex gap-3 mt-4">
             <button
               onClick={handleAdd}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg"
             >
               <Save className="w-4 h-4" />
               Save
             </button>
+
             <button
               onClick={() => setShowAddForm(false)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
             >
               <X className="w-4 h-4" />
               Cancel
@@ -182,10 +240,11 @@ const Stations = () => {
         </div>
       )}
 
+      {/* STATIONS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stations.map(station => (
-          <div key={station.id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition">
-            <div className="flex justify-between items-start mb-4">
+          <div key={station.id} className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="flex justify-between">
               <div className="flex items-center gap-3">
                 <div className="text-3xl">{getTypeIcon(station.type)}</div>
                 <div>
@@ -194,12 +253,13 @@ const Stations = () => {
                       type="text"
                       value={station.name}
                       onChange={(e) => updateStationField(station.id, 'name', e.target.value)}
-                      className="px-2 py-1 border rounded font-semibold"
+                      className="px-2 py-1 border rounded"
                     />
                   ) : (
-                    <h3 className="font-semibold text-lg text-gray-900">{station.name}</h3>
+                    <h3 className="font-semibold text-lg">{station.name}</h3>
                   )}
-                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium mt-1 ${getTypeBadgeColor(station.type)}`}>
+
+                  <span className={`px-2 py-1 text-xs rounded-full ${getTypeBadgeColor(station.type)}`}>
                     {station.type}
                   </span>
                 </div>
@@ -207,8 +267,9 @@ const Stations = () => {
               <span className="text-sm text-gray-500">ID: {station.id}</span>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="space-y-3 mt-4">
+              {/* PHONE */}
+              <div className="flex items-center gap-2 text-sm">
                 <Phone className="w-4 h-4" />
                 {editingId === station.id ? (
                   <input
@@ -222,55 +283,53 @@ const Stations = () => {
                 )}
               </div>
 
-              <div className="flex items-start gap-2 text-sm text-gray-600">
-                <MapPin className="w-4 h-4 mt-0.5" />
+              {/* LOCATION */}
+              <div className="flex items-start gap-2 text-sm">
+                <MapPin className="w-4 h-4 mt-1" />
                 {editingId === station.id ? (
                   <input
                     type="text"
-                    value={station.location}
-                    onChange={(e) => updateStationField(station.id, 'location', e.target.value)}
+                    value={station.locationText}
+                    onChange={(e) => updateLocationField(station.id, e.target.value)}
                     className="px-2 py-1 border rounded flex-1"
-                    placeholder="lat,lng"
                   />
                 ) : (
-                  <span className="break-all">{station.location}</span>
+                  <span>{station.locationText}</span>
                 )}
               </div>
             </div>
 
+            {/* ACTION BUTTONS */}
             <div className="flex gap-2 mt-4 pt-4 border-t">
               {editingId === station.id ? (
                 <>
                   <button
                     onClick={() => handleUpdate(station.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    className="flex-1 bg-green-600 text-white py-2 rounded"
                   >
-                    <Save className="w-4 h-4" />
-                    Save
+                    <Save className="w-4 h-4 inline" /> Save
                   </button>
                   <button
                     onClick={() => setEditingId(null)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
+                    className="flex-1 bg-gray-200 py-2 rounded"
                   >
-                    <X className="w-4 h-4" />
-                    Cancel
+                    <X className="w-4 h-4 inline" /> Cancel
                   </button>
                 </>
               ) : (
                 <>
                   <button
                     onClick={() => setEditingId(station.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    className="flex-1 bg-blue-600 text-white py-2 rounded"
                   >
-                    <Edit2 className="w-4 h-4" />
-                    Edit
+                    <Edit2 className="w-4 h-4 inline" /> Edit
                   </button>
+
                   <button
                     onClick={() => handleDelete(station.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                    className="flex-1 bg-red-600 text-white py-2 rounded"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
+                    <Trash2 className="w-4 h-4 inline" /> Delete
                   </button>
                 </>
               )}
@@ -278,21 +337,6 @@ const Stations = () => {
           </div>
         ))}
       </div>
-
-      {/* {stations.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg border">
-          <Building2 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No stations yet</h3>
-          <p className="text-gray-600 mb-4">Get started by adding your first station</p>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <Building2 className="w-4 h-4" />
-            Add Station
-          </button>
-        </div>
-      )} */}
     </div>
   );
 };

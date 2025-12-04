@@ -6,6 +6,6 @@ import smartemergencydispatcher.model.enums.VehicleStatus;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-class VehicleStatusUpdateDTO {
+public class VehicleStatusUpdateDTO {
     private VehicleStatus status;
 }
