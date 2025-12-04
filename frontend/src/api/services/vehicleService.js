@@ -108,6 +108,10 @@ class VehicleService {
   async getAvailableByType(type) {
     return await this.getAvailable(type);
   }
+
+  async getAvailableVehicles() {
+      return await apiClient.get(VEHICLE_ENDPOINTS.GET_AVAILABLE);
+  }
 }
 
 export default new VehicleService();

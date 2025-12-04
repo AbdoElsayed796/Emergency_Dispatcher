@@ -1,7 +1,9 @@
 package smartemergencydispatcher.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import smartemergencydispatcher.dto.vehicledto.AvailableVehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleCreateDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleUpdateDTO;
@@ -17,23 +19,38 @@ public class VehicleController {
 
     private final VehicleService vehicleService;
 
+    // Get all vehicles
     @GetMapping
-    public List<VehicleDTO> getAllVehicles() {
-        return vehicleService.getAllVehicles();
+    public ResponseEntity<List<VehicleDTO>> getAllVehicles() {
+        List<VehicleDTO> vehicles = vehicleService.getAllVehicles();
+        return ResponseEntity.ok(vehicles);
     }
 
+    // Get all available vehicles
+    @GetMapping("/available")
+    public ResponseEntity<List<AvailableVehicleDTO>> getAllAvailableVehicles() {
+        List<AvailableVehicleDTO> availableVehicles = vehicleService.getAllAvailableVehicles();
+        return ResponseEntity.ok(availableVehicles);
+    }
+
+    // Create vehicle
     @PostMapping
-    public VehicleDTO createVehicle(@RequestBody VehicleCreateDTO dto) {
-        return vehicleService.createVehicle(dto);
+    public ResponseEntity<VehicleDTO> createVehicle(@RequestBody VehicleCreateDTO dto) {
+        VehicleDTO vehicle = vehicleService.createVehicle(dto);
+        return ResponseEntity.ok(vehicle);
     }
 
+    // Update vehicle
     @PutMapping("/{id}")
-    public VehicleDTO updateVehicle(@PathVariable Integer id, @RequestBody VehicleUpdateDTO dto) {
-        return vehicleService.updateVehicle(id, dto);
+    public ResponseEntity<VehicleDTO> updateVehicle(@PathVariable Integer id, @RequestBody VehicleUpdateDTO dto) {
+        VehicleDTO updatedVehicle = vehicleService.updateVehicle(id, dto);
+        return ResponseEntity.ok(updatedVehicle);
     }
 
+    // Delete vehicle
     @DeleteMapping("/{id}")
-    public void deleteVehicle(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteVehicle(@PathVariable Integer id) {
         vehicleService.deleteVehicle(id);
+        return ResponseEntity.noContent().build();
     }
 }

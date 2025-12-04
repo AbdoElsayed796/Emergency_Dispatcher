@@ -44,7 +44,7 @@ public class UserController {
         this.userService = userService;
     }
     
-    @PostMapping("/login")
+    @PostMapping("/login") // need base url auth
     public ResponseEntity<?> loginUser(@RequestBody UserLoginDTO loginDto) {
         String email = loginDto.getEmail();
         String password = loginDto.getPassword();

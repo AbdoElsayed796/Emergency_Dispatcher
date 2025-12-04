@@ -38,7 +38,7 @@ public class Incident {
     @Column(name = "reported_time",nullable = false)
     private LocalDateTime reportedTime;
 
-    @Column(nullable = false, columnDefinition = "POINT")
+    @Column(nullable = false, columnDefinition = "GEOMETRY")
     @JdbcTypeCode(SqlTypes.GEOMETRY)
-    private Point location;
+    private org.locationtech.jts.geom.Point location;
 }

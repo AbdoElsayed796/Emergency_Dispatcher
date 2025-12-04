@@ -26,14 +26,14 @@ export const STATION_ENDPOINTS = {
 
 // Vehicle endpoints
 export const VEHICLE_ENDPOINTS = {
-  GET_ALL: '/vehicles/all',
+  GET_ALL: '/api/vehicles',
   GET_BY_ID: (id) => `/vehicles/${id}`,
   CREATE: '/vehicles/create',
   UPDATE: (id) => `/vehicles/${id}`,
   DELETE: (id) => `/vehicles/${id}`,
   GET_BY_STATION: (stationId) => `/vehicles/station/${stationId}`,
   GET_BY_STATUS: (status) => `/vehicles/status/${status}`,
-  GET_AVAILABLE: '/vehicles/available',
+  GET_AVAILABLE: '/api/vehicles/available',
   UPDATE_STATUS: (id) => `/vehicles/${id}/status`,
   UPDATE_LOCATION: (id) => `/vehicles/${id}/location`,
 };
@@ -44,6 +44,7 @@ export const INCIDENT_ENDPOINTS = {
   GET_BY_ID: (id) => `/incidents/${id}`,
   CREATE: '/incidents/create',
   UPDATE: (id) => `/incidents/${id}`,
+  UPDATE_STATUS: (id) => `/incidents/${id}/status`,
   DELETE: (id) => `/incidents/${id}`,
   GET_BY_STATUS: (status) => `/incidents/status/${status}`,
   GET_BY_SEVERITY: (severity) => `/incidents/severity/${severity}`,

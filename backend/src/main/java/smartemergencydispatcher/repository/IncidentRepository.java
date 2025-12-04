@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import smartemergencydispatcher.model.Incident;
 import smartemergencydispatcher.model.enums.IncidentStatus;
 import smartemergencydispatcher.model.enums.IncidentType;
@@ -14,7 +17,7 @@ import smartemergencydispatcher.model.enums.SeverityLevel;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+import java.util.Optional;
 
 import smartemergencydispatcher.model.enums.IncidentStatus;
 
@@ -23,7 +26,7 @@ import java.util.List;
 @Repository
 public interface IncidentRepository extends JpaRepository<Incident, Integer> {
     @Query("SELECT i FROM Incident i WHERE i.id = :id")
-    Incident getIncidentById(@Param("id") Integer id);
+    Optional<Incident> getIncidentById(@Param("id") Integer id);
 
     @Query("SELECT i From Incident i WHERE i.status = :status")
     List<Incident> getIncidentByStatus(@Param("status") IncidentStatus status);
@@ -55,6 +58,11 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
 
     long countByStatusIn(List<IncidentStatus> statuses);
 
+
+
+    
+    @Query("SELECT i FROM Incident i ORDER BY i.reportedTime DESC")
+    List<Incident> findAllIncidents();
 
 
 }

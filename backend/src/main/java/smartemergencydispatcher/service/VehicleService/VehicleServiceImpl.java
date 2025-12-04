@@ -6,6 +6,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.locationDTO.LocationDTO;
+import smartemergencydispatcher.dto.vehicledto.AvailableVehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleCreateDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleUpdateDTO;
@@ -27,13 +28,14 @@ public class VehicleServiceImpl implements VehicleService {
     private final VehicleRepository vehicleRepository;
     private final StationRepository stationRepository;
     private final UserRepository userRepository;
+    private final VehicleMapper vehicleMapper; // Injected mapper
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Override
     public List<VehicleDTO> getAllVehicles() {
-        return vehicleRepository.findAll()
+        return vehicleRepository.findAllVehicles()
                 .stream()
-                .map(this::mapToDTO)
+                .map(vehicleMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -53,7 +55,7 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.setStation(station);
         vehicle.setResponder(responder);
 
-        return mapToDTO(vehicleRepository.save(vehicle));
+        return vehicleMapper.toDTO(vehicleRepository.save(vehicle));
     }
 
     @Override
@@ -69,7 +71,7 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.setLocation(convertToPoint(dto.getLocation()));
         vehicle.setResponder(responder);
 
-        return mapToDTO(vehicleRepository.save(vehicle));
+        return vehicleMapper.toDTO(vehicleRepository.save(vehicle));
     }
 
     @Override
@@ -77,13 +79,15 @@ public class VehicleServiceImpl implements VehicleService {
         vehicleRepository.deleteById(id);
     }
 
+    @Override
+    public List<AvailableVehicleDTO> getAllAvailableVehicles() {
+        List<Vehicle> availableVehicles = vehicleRepository.findAllAvailableVehicles();
+        return availableVehicles.stream()
+                .map(vehicleMapper::toAvailableDTO)
+                .collect(Collectors.toList());
+    }
 
     private Point convertToPoint(LocationDTO dto) {
         return geometryFactory.createPoint(new Coordinate(dto.getLongitude(), dto.getLatitude()));
-    }
-
-    private VehicleDTO mapToDTO(Vehicle v) {
-        VehicleMapper vehicleMapper = new VehicleMapper();
-        return vehicleMapper.toDTO(v);
     }
 }

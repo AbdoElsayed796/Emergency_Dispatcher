@@ -10,12 +10,14 @@ import smartemergencydispatcher.model.enums.IncidentType;
 import smartemergencydispatcher.model.enums.SeverityLevel;
 import smartemergencydispatcher.service.Incident.IncidentService;
 
+import lombok.*;
+import smartemergencydispatcher.dto.incidentdto.IncidentStatusUpdateDTO;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin/incidents")
-// @RequestMapping("/incidents")
+//@RequestMapping("/api/admin/incidents")
+@RequestMapping("/incidents")
 @CrossOrigin(origins = "http://localhost:5173")
 public class IncidentController {
     private final IncidentService incidentService;
@@ -65,4 +67,17 @@ public class IncidentController {
         List<IncidentDTO> activeIncidents = incidentService.getActiveIncidents();
         return ResponseEntity.ok(activeIncidents);
     }
+    @GetMapping("/all")
+    public ResponseEntity<List<IncidentDTO>> getAllIncidents(){
+        System.out.println("Here#######################");
+        List<IncidentDTO> incidents = incidentService.getAllIncidents();
+        return ResponseEntity.ok(incidents);
+    }
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<IncidentDTO> updateIncidentStatus(@PathVariable Integer id,
+                                                            @RequestBody IncidentStatusUpdateDTO statusUpdateDTO){
+        IncidentDTO updatedIncident = incidentService.updateIncidentStatus(id, statusUpdateDTO);
+        return ResponseEntity.ok(updatedIncident);
+    }
+
 }

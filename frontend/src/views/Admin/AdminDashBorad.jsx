@@ -23,7 +23,7 @@ const AdminDashboard = () => {
     try {
       const [statsRes, incidentsRes] = await Promise.all([
         fetch("http://localhost:8080/api/admin/stats"),
-        fetch("http://localhost:8080/api/admin/incidents/active"),
+        fetch("http://localhost:8080/incidents/active"),
       ]);
      
       const statsData = await statsRes.json();

@@ -120,6 +120,10 @@ class IncidentService {
   async getCritical() {
     return await this.getBySeverity('CRITICAL');
   }
+
+  async updateStatus(id, status) {
+      return await apiClient.patch(INCIDENT_ENDPOINTS.UPDATE_STATUS(id), { status }.status);
+  }
 }
 
 export default new IncidentService();

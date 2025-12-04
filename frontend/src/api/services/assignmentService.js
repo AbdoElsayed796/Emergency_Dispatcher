@@ -105,10 +105,10 @@ class AssignmentService {
    */
   async assignVehicleToIncident(vehicleId, incidentId, dispatcherUserId) {
     return await this.create({
-      vehicle_id: vehicleId,
-      incident_id: incidentId,
-      dispatcher_user_id: dispatcherUserId,
-      time_assigned: new Date().toISOString(),
+        incidentId: incidentId,
+        vehicleId: vehicleId,
+        dispatcherId: dispatcherUserId,
+
     });
   }
 }

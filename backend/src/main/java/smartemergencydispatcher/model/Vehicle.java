@@ -3,6 +3,8 @@ package smartemergencydispatcher.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.Point;
 import smartemergencydispatcher.model.enums.VehicleStatus;
 import smartemergencydispatcher.model.enums.VehicleType;
@@ -30,6 +32,7 @@ public class Vehicle {
     private int capacity;
 
     @Column(nullable = false, columnDefinition = "POINT")
+    @JdbcTypeCode(SqlTypes.GEOMETRY)
     private Point location;
 
     @ManyToOne(fetch = FetchType.LAZY)
