@@ -120,6 +120,7 @@ public class IncidentServiceImp implements IncidentService{
         if (incident == null) {
             return new IncidentDTO();
         }
+
         if (!incidentDTO.getSeverityLevel().equals(incident.getSeverityLevel())){
             incident.setSeverityLevel(incidentDTO.getSeverityLevel());
         }
@@ -148,13 +149,26 @@ public class IncidentServiceImp implements IncidentService{
 
 
     @Transactional
-    public IncidentDTO updateIncidentStatus(Integer id, IncidentStatusUpdateDTO statusUpdateDTO){
+    public IncidentDTO updateIncidentStatus(Integer id, IncidentStatusUpdateDTO statusUpdateDTO) {
+        System.out.println("updated incident is called");
+
         Incident incident = incidentRepository.getIncidentById(id)
                 .orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
+
+        Vehicle detachedVehicle = assignmentRepository.findVehicleByIncidentId(id)
+                .orElseThrow(() -> new RuntimeException("Vehicle not found for incident id: " + id));
+
+        Vehicle vehicle = vehicleRepository.findById(detachedVehicle.getId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found in repository"));
+
+        vehicle.setStatus(VehicleStatus.AVAILABLE);
+        vehicleRepository.saveAndFlush(vehicle); 
+        System.out.println("vehicle status updated to available " + vehicle.getStatus());
 
         incident.setStatus(statusUpdateDTO.getStatus());
         Incident updatedIncident = incidentRepository.save(incident);
 
         return incidentMapper.toDTO(updatedIncident);
     }
+
 }
