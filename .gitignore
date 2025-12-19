@@ -1,0 +1,4 @@
+.idea/
+application.properties
+application-*.properties
+*.env
