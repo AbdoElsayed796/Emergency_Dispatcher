@@ -151,9 +151,7 @@ public class IncidentServiceImp implements IncidentService{
     public IncidentDTO updateIncidentStatus(Integer id, IncidentStatusUpdateDTO statusUpdateDTO){
         Incident incident = incidentRepository.getIncidentById(id)
                 .orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
-        Vehicle vehicle = assignmentRepository.findVehicleByIncidentId(id) .orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
-        vehicle.setStatus(VehicleStatus.AVAILABLE);
-        vehicleRepository.save(vehicle);
+
         incident.setStatus(statusUpdateDTO.getStatus());
         Incident updatedIncident = incidentRepository.save(incident);
 
