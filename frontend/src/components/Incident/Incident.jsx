@@ -86,7 +86,7 @@ export default function Incident() {
       console.log('Submitting incident data:', incidentData);
       console.log("POINT = " + incidentData.location.latitude + " " + incidentData.location.longitude);
 
-      const response = await axios.post(`${API_BASE_URL}/api/admin/incidents/add`, incidentData);
+      const response = await axios.post(`${API_BASE_URL}/incidents/add`, incidentData);
       
       if (response.data.success || response.status === 201) {
         setSuccessMessage('Incident reported successfully! Help is on the way.');

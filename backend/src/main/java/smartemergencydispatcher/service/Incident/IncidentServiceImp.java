@@ -8,14 +8,19 @@ import smartemergencydispatcher.dto.incidentdto.IncidentDTO;
 import smartemergencydispatcher.dto.incidentdto.IncidentStatusUpdateDTO;
 import smartemergencydispatcher.mapper.IncidentMapper;
 import smartemergencydispatcher.model.Incident;
+import smartemergencydispatcher.model.Vehicle;
 import smartemergencydispatcher.model.enums.IncidentStatus;
 import smartemergencydispatcher.model.enums.IncidentType;
 import smartemergencydispatcher.model.enums.SeverityLevel;
+import smartemergencydispatcher.model.enums.VehicleStatus;
+import smartemergencydispatcher.repository.AssignmentRepository;
 import smartemergencydispatcher.repository.IncidentRepository;
+import smartemergencydispatcher.repository.VehicleRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -24,11 +29,17 @@ import java.util.stream.Collectors;
 public class IncidentServiceImp implements IncidentService{
     private final IncidentRepository incidentRepository;
     private final IncidentMapper incidentMapper;
+    private final AssignmentRepository assignmentRepository;
+    private final VehicleRepository vehicleRepository ;
     @Autowired
-    public IncidentServiceImp(IncidentRepository incidentRepository) {
+    public IncidentServiceImp(IncidentRepository incidentRepository,
+                              AssignmentRepository assignmentRepository, VehicleRepository vehicleRepository) {
+        this.vehicleRepository = vehicleRepository;
         this.incidentMapper = new IncidentMapper();
         this.incidentRepository = incidentRepository;
+        this.assignmentRepository = assignmentRepository;
     }
+
     @Override
     public IncidentDTO getIncidentById(Integer id) {
         Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));;

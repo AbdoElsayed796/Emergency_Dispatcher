@@ -5,11 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import smartemergencydispatcher.model.Assignment;
+import smartemergencydispatcher.model.Vehicle;
 import smartemergencydispatcher.model.enums.IncidentType;
 import smartemergencydispatcher.model.enums.VehicleType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, Integer> {
     @Query("""
@@ -62,5 +64,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+    @Query("SELECT a.vehicle FROM Assignment a WHERE a.incident.id = :incidentId")
+    Optional<Vehicle> findVehicleByIncidentId(@Param("incidentId") Integer incidentId);
 
 }
