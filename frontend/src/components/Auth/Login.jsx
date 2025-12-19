@@ -66,7 +66,7 @@ export default function Login() {
   return (
     <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 bg-gradient-to-br from-blue-50 to-white">
       {/* Left Panel - Branding (Hidden on mobile) */}
-      <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-pink-600 to-blue-800 p-12">
+      <div className="hidden lg:flex items-center justify-center bg-blue-400 bg-gradient-to-br from-pink-600 to-blue-800 p-12">
         <div className="flex flex-col gap-8 text-center text-white max-w-md">
           <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto">
             <svg 
