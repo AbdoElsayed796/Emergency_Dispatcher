@@ -5,6 +5,8 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+import smartemergencydispatcher.dto.vehicledto.VehicleLiveDTO;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class VehicleRedisSubscriber implements MessageListener {
@@ -30,8 +32,4 @@ public class VehicleRedisSubscriber implements MessageListener {
         }
     }
 
-    @Override
-    public void onMessage(Message message, byte @Nullable [] pattern) {
-
-    }
 }
