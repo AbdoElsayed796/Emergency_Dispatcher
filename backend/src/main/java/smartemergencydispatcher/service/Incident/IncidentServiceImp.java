@@ -2,6 +2,7 @@ package smartemergencydispatcher.service.Incident;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.incidentdto.IncidentCreateDTO;
 import smartemergencydispatcher.dto.incidentdto.IncidentDTO;
@@ -20,7 +21,6 @@ import smartemergencydispatcher.repository.VehicleRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -31,18 +31,21 @@ public class IncidentServiceImp implements IncidentService{
     private final IncidentMapper incidentMapper;
     private final AssignmentRepository assignmentRepository;
     private final VehicleRepository vehicleRepository ;
+    private final SimpMessagingTemplate messagingTemplate;
+
     @Autowired
     public IncidentServiceImp(IncidentRepository incidentRepository,
-                              AssignmentRepository assignmentRepository, VehicleRepository vehicleRepository) {
+                              AssignmentRepository assignmentRepository, VehicleRepository vehicleRepository, SimpMessagingTemplate messagingTemplate) {
         this.vehicleRepository = vehicleRepository;
         this.incidentMapper = new IncidentMapper();
         this.incidentRepository = incidentRepository;
         this.assignmentRepository = assignmentRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
     public IncidentDTO getIncidentById(Integer id) {
-        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));;
+        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
         return incidentMapper.toDTO(incident);
     }
 
@@ -96,11 +99,14 @@ public class IncidentServiceImp implements IncidentService{
                 incidentDTOs.add(incidentMapper.toDTO(i));
             }
         }
+        messagingTemplate.convertAndSend("/topic/incidents", incidentDTOs);
         return incidentDTOs;
     }
+
     @Override
     public void deleteById(Integer id) {
         incidentRepository.deleteById(id);
+        findAll();
     }
 
     @Override
@@ -111,12 +117,13 @@ public class IncidentServiceImp implements IncidentService{
         System.out.println("Incident = " + incident);
         System.out.println("POINT = " + incident.getLocation());
         Incident saved = incidentRepository.save(incident);
+        findAll();
         return incidentMapper.toDTO(saved);
     }
 
     @Override
     public IncidentDTO updateIncident(Integer id, IncidentDTO incidentDTO) {
-        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));;
+        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
         if (incident == null) {
             return new IncidentDTO();
         }
@@ -128,6 +135,7 @@ public class IncidentServiceImp implements IncidentService{
             incident.setStatus(incidentDTO.getStatus());
         }
         Incident updated = incidentRepository.updateIncident(id, incident.getStatus(), incident.getSeverityLevel());
+        findAll();
         return incidentMapper.toDTO(updated);
 
     }
@@ -167,6 +175,8 @@ public class IncidentServiceImp implements IncidentService{
 
         incident.setStatus(statusUpdateDTO.getStatus());
         Incident updatedIncident = incidentRepository.save(incident);
+
+        findAll();
 
         return incidentMapper.toDTO(updatedIncident);
     }

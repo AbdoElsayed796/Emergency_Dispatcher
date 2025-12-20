@@ -213,7 +213,7 @@ const DispatcherDashboard = () => {
                 )}
 
                 {activeTab === 'vehicles' && <VehiclesGrid vehicles={vehicles} />}
-                {activeTab === 'map' && <MapView incidents={incidents} vehicles={vehicles} />}
+                {activeTab === 'map' && <MapView incidents={incidents} vehicles={vehicles} setIncidents={setIncidents} setVehicles={setVehicles} />}
             </div>
 
             {/* Overlay to close dropdowns when clicking outside */}

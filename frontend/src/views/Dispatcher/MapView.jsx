@@ -34,7 +34,7 @@ const createModernIcon = (emoji, color) =>
 
 const WORLD_CENTER = [20, 0];
 
-const MapView = ({ incidents = [], vehicles = [] }) => {
+const MapView = ({ incidents = [], vehicles = [] , setIncidents, setVehicles}) => {
   const [liveVehicles, setLiveVehicles] = useState(vehicles);
 
   // ---------- WEBSOCKET ----------
@@ -57,7 +57,25 @@ const MapView = ({ incidents = [], vehicles = [] }) => {
               v.id === updatedVehicle.id ? { ...v, ...updatedVehicle } : v
             );
           });
+
+          //! Here---------------------------------
+          setVehicles((prev) => {
+              const exists = prev.find(v => v.id === updatedVehicle.id);
+              if (!exists) return [...prev, updatedVehicle];
+              return prev.map((v) =>
+              v.id === updatedVehicle.id ? { ...v, ...updatedVehicle } : v
+              );
+          })
         });
+
+        //! Here------------------------------------
+        client.subscribe("/topic/incidents", (msg) => {
+            const updatedIncidents = JSON.parse(msg.body);
+            console.log("Received incidents:", updatedIncidents);
+            if (updatedIncidents.length > 0) {
+                setIncidents(updatedIncidents);
+            }
+        })
       },
 
       onStompError: (frame) => {

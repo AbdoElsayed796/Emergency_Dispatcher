@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Router } from "react-router-dom";
-import { useState, useEffect } from 'react'
 import Admin from "./views/Admin/Admin";
 import AdminDashboard from "./views/Admin/AdminDashBorad";
 import Users from "./components/User/Users";   
