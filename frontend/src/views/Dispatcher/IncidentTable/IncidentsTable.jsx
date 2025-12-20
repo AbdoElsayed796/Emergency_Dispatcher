@@ -16,7 +16,8 @@ const IncidentsTable = ({
                             selectedSeverity,
                             setSelectedSeverity,
                             filteredIncidents,
-                            onIncidentUpdate
+                            onIncidentUpdate,
+                            handleDeleteClick
                         }) => {
     const [selectedIncident, setSelectedIncident] = useState(null);
     const [modalType, setModalType] = useState(null); // 'assign', 'track', 'details'
@@ -125,6 +126,7 @@ const IncidentsTable = ({
                     handleAssignClick={handleAssignClick}
                     handleTrackClick={handleTrackClick}
                     handleViewDetailsClick={handleViewDetailsClick}
+                    handleDeleteClick={handleDeleteClick}
                 />
             </div>
 

@@ -1,13 +1,14 @@
 import React from 'react';
-import { MapPin, Truck, Navigation, Eye, Clock } from 'lucide-react';
+import { MapPin, Truck, Navigation, Eye, Clock, Trash2 } from 'lucide-react';
 import { getTypeColor, getSeverityBadge, getStatusBadge } from '../../../utils/dispatcherHelpers.jsx';
 
 const IncidentsList = ({
-                           filteredIncidents,
-                           handleAssignClick,
-                           handleTrackClick,
-                           handleViewDetailsClick
-                       }) => {
+    filteredIncidents,
+    handleAssignClick,
+    handleTrackClick,
+    handleViewDetailsClick,
+    handleDeleteClick // <- new prop for delete
+}) => {
 
     // Helper to format time difference
     const getWaitTime = (reportedTime) => {
@@ -85,8 +86,8 @@ const IncidentsList = ({
                                         {getWaitTime(incident.reportedTime)}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    {incident.status === 'REPORTED' ? (
+                                <td className="px-6 py-4 whitespace-nowrap text-sm flex flex-col gap-1">
+                                    {incident.status === 'REPORTED' && (
                                         <button
                                             onClick={() => handleAssignClick(incident)}
                                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium flex items-center gap-1"
@@ -94,7 +95,8 @@ const IncidentsList = ({
                                             <Truck className="w-3 h-3" />
                                             Assign Vehicle
                                         </button>
-                                    ) : incident.status === 'ASSIGNED' ? (
+                                    )}
+                                    {incident.status === 'ASSIGNED' && (
                                         <button
                                             onClick={() => handleTrackClick(incident)}
                                             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs font-medium flex items-center gap-1"
@@ -102,7 +104,26 @@ const IncidentsList = ({
                                             <Navigation className="w-3 h-3" />
                                             Track
                                         </button>
-                                    ) : (
+                                    )}
+                                    {incident.status === 'RESOLVED' && (
+                                        <div className="flex gap-1">
+                                            <button
+                                                onClick={() => handleViewDetailsClick(incident)}
+                                                className="px-3 py-1 bg-gray-200 text-gray-600 rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-gray-300"
+                                            >
+                                                <Eye className="w-3 h-3" />
+                                                View
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteClick(incident.id)}
+                                                className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-red-700"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                                Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                    {incident.status !== 'REPORTED' && incident.status !== 'ASSIGNED' && incident.status !== 'RESOLVED' && (
                                         <button
                                             onClick={() => handleViewDetailsClick(incident)}
                                             className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg text-xs font-medium flex items-center gap-1 hover:bg-gray-300"

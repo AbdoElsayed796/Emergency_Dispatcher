@@ -7,7 +7,11 @@ import StatsCards from './StatsCards';
 import IncidentsTable from './IncidentTable/IncidentsTable.jsx';
 import VehiclesGrid from './VehiclesGrid';
 import MapView from './MapView';
-import {vehicleService, incidentService} from "../../api/services/index.js";
+import { vehicleService, incidentService } from "../../api/services/index.js";
+
+// WebSocket
+import SockJS from "sockjs-client/dist/sockjs";
+import { Client } from "@stomp/stompjs";
 
 const DispatcherDashboard = () => {
     const [activeTab, setActiveTab] = useState('incidents');
@@ -31,46 +35,11 @@ const DispatcherDashboard = () => {
     const [error, setError] = useState(null);
 
     const notifications = [
-        {
-            id: 1,
-            type: 'urgent',
-            title: 'Critical Incident Unassigned',
-            message: 'INC-002 - Building fire has been waiting for 6 minutes',
-            time: '2 min ago',
-            read: false
-        },
-        {
-            id: 2,
-            type: 'warning',
-            title: 'Vehicle Delayed',
-            message: 'FIRE-03 is experiencing traffic delays. ETA +5 minutes',
-            time: '5 min ago',
-            read: false
-        },
-        {
-            id: 3,
-            type: 'info',
-            title: 'New Incident Reported',
-            message: 'INC-005 - Medical emergency at Downtown Plaza',
-            time: '10 min ago',
-            read: true
-        },
-        {
-            id: 4,
-            type: 'success',
-            title: 'Incident Resolved',
-            message: 'INC-004 has been successfully resolved by AMB-02',
-            time: '15 min ago',
-            read: true
-        },
-        {
-            id: 5,
-            type: 'warning',
-            title: 'Low Vehicle Availability',
-            message: 'Only 2 ambulances available in Zone A',
-            time: '20 min ago',
-            read: true
-        }
+        { id: 1, type: 'urgent', title: 'Critical Incident Unassigned', message: 'INC-002 - Building fire has been waiting for 6 minutes', time: '2 min ago', read: false },
+        { id: 2, type: 'warning', title: 'Vehicle Delayed', message: 'FIRE-03 is experiencing traffic delays. ETA +5 minutes', time: '5 min ago', read: false },
+        { id: 3, type: 'info', title: 'New Incident Reported', message: 'INC-005 - Medical emergency at Downtown Plaza', time: '10 min ago', read: true },
+        { id: 4, type: 'success', title: 'Incident Resolved', message: 'INC-004 has been successfully resolved by AMB-02', time: '15 min ago', read: true },
+        { id: 5, type: 'warning', title: 'Low Vehicle Availability', message: 'Only 2 ambulances available in Zone A', time: '20 min ago', read: true }
     ];
 
     // Fetch all data on component mount
@@ -83,7 +52,6 @@ const DispatcherDashboard = () => {
             setLoading(true);
             setError(null);
 
-            // Fetch incidents and vehicles in parallel
             const [incidentsData, vehiclesData] = await Promise.all([
                 incidentService.getAll(),
                 vehicleService.getAll()
@@ -91,8 +59,6 @@ const DispatcherDashboard = () => {
 
             setIncidents(incidentsData);
             setVehicles(vehiclesData);
-
-            //? Calculate stats from the data
             calculateStats(incidentsData, vehiclesData);
 
         } catch (err) {
@@ -104,36 +70,51 @@ const DispatcherDashboard = () => {
     };
 
     const calculateStats = (incidentsData, vehiclesData) => {
-        const activeIncidentsCount = incidentsData.filter(
-            inc => inc.status === 'REPORTED' || inc.status === 'ASSIGNED'
-        ).length;
-
-        const availableVehiclesCount = vehiclesData.filter(
-            v => v.status === 'AVAILABLE'
-        ).length;
-
-        const onRouteCount = vehiclesData.filter(
-            v => v.status === 'ON_ROUTE'
-        ).length;
-
         setStats({
-            activeIncidents: activeIncidentsCount,
-            availableVehicles: availableVehiclesCount,
-            onRoute: onRouteCount,
+            activeIncidents: incidentsData.filter(inc => inc.status === 'REPORTED' || inc.status === 'ASSIGNED').length,
+            availableVehicles: vehiclesData.filter(v => v.status === 'AVAILABLE').length,
+            onRoute: vehiclesData.filter(v => v.status === 'ON_ROUTE').length,
         });
     };
 
-    // Filter logic - Updated to match backend DTO properties
+    // ---------- WEBSOCKET ----------
+    useEffect(() => {
+        const client = new Client({
+            webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+            reconnectDelay: 5000,
+
+            onConnect: () => {
+                console.log("✅ WebSocket connected");
+
+                client.subscribe("/topic/vehicles", (msg) => {
+                    const updatedVehicle = JSON.parse(msg.body);
+                    setVehicles(prev => {
+                        const exists = prev.find(v => v.id === updatedVehicle.id);
+                        if (!exists) return [...prev, updatedVehicle];
+                        return prev.map(v => v.id === updatedVehicle.id ? { ...v, ...updatedVehicle } : v);
+                    });
+                });
+
+                client.subscribe("/topic/incidents", (msg) => {
+                    const updatedIncidents = JSON.parse(msg.body);
+                    if (updatedIncidents.length > 0) setIncidents(updatedIncidents);
+                });
+            },
+
+            onStompError: (frame) => {
+                console.error("❌ STOMP error", frame);
+            }
+        });
+
+        client.activate();
+        return () => client.deactivate();
+    }, []);
+
+    // Filter logic
     const filteredIncidents = incidents.filter(inc => {
-        // Type filter: backend uses enum IncidentType (FIRE, MEDICAL, POLICE)
         if (selectedType !== 'All Types' && inc.type !== selectedType) return false;
-
-        // Status filter: backend uses enum IncidentStatus (REPORTED, ASSIGNED, RESOLVED)
         if (selectedStatus !== 'All Statuses' && inc.status !== selectedStatus) return false;
-
-        // Severity filter: backend uses enum SeverityLevel (CRITICAL, HIGH, MEDIUM, LOW)
         if (selectedSeverity !== 'All Severities' && inc.severityLevel !== selectedSeverity) return false;
-
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             return (
@@ -145,7 +126,6 @@ const DispatcherDashboard = () => {
                 inc.location?.longitude?.toString().includes(query)
             );
         }
-
         return true;
     });
 
@@ -183,7 +163,6 @@ const DispatcherDashboard = () => {
             <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
             <div className="p-6 max-w-7xl mx-auto">
-                {/* Error message */}
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
                         <span>{error}</span>
@@ -195,6 +174,7 @@ const DispatcherDashboard = () => {
                         </button>
                     </div>
                 )}
+
                 <StatsCards stats={stats} />
 
                 {activeTab === 'incidents' && (
@@ -209,14 +189,34 @@ const DispatcherDashboard = () => {
                         setSelectedSeverity={setSelectedSeverity}
                         filteredIncidents={filteredIncidents}
                         onIncidentUpdate={fetchAllData}
+                        handleDeleteClick={async (id) => {
+                            try {
+                              await incidentService.delete(id); 
+                            } catch (err) {
+                              console.error("Failed to delete incident", err);
+                            }
+                          }}
+
                     />
                 )}
 
                 {activeTab === 'vehicles' && <VehiclesGrid vehicles={vehicles} />}
-                {activeTab === 'map' && <MapView incidents={incidents} vehicles={vehicles} setIncidents={setIncidents} setVehicles={setVehicles} />}
+                {activeTab === 'map' && (
+                    <MapView 
+                    incidents={incidents} 
+                    vehicles={vehicles} 
+                    onDeleteIncident={async (id) => {
+                      try {
+                        await incidentService.delete(id); 
+                      } catch (err) {
+                        console.error("Failed to delete incident", err);
+                      }
+                    }}
+                  />
+                  
+                )}
             </div>
 
-            {/* Overlay to close dropdowns when clicking outside */}
             {(showNotifications || showUserMenu) && (
                 <div
                     className="fixed inset-0 z-40"

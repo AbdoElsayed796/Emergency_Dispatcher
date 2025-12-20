@@ -1,14 +1,9 @@
-import React, { useEffect, useState } from "react";
-
-// Leaflet / Map
+import React from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// WebSocket
-import SockJS from "sockjs-client/dist/sockjs";
-import { Client } from "@stomp/stompjs";
-
+const WORLD_CENTER = [20, 0];
 
 // ---------- ICON ----------
 const createModernIcon = (emoji, color) =>
@@ -32,94 +27,52 @@ const createModernIcon = (emoji, color) =>
     className: "",
   });
 
-const WORLD_CENTER = [20, 0];
-
-const MapView = ({ incidents = [], vehicles = [] , setIncidents, setVehicles}) => {
-  const [liveVehicles, setLiveVehicles] = useState(vehicles);
-
-  // ---------- WEBSOCKET ----------
-  useEffect(() => {
-    const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
-      reconnectDelay: 5000,
-
-      onConnect: () => {
-        console.log("✅ WebSocket connected");
-
-        client.subscribe("/topic/vehicles", (msg) => {
-          const updatedVehicle = JSON.parse(msg.body);
-          console.log("Received vehicle:", updatedVehicle); // <-- Add this
-          setLiveVehicles((prev) => {
-            const exists = prev.find(v => v.id === updatedVehicle.id);
-            if (!exists) return [...prev, updatedVehicle];
-
-            return prev.map((v) =>
-              v.id === updatedVehicle.id ? { ...v, ...updatedVehicle } : v
-            );
-          });
-
-          //! Here---------------------------------
-          setVehicles((prev) => {
-              const exists = prev.find(v => v.id === updatedVehicle.id);
-              if (!exists) return [...prev, updatedVehicle];
-              return prev.map((v) =>
-              v.id === updatedVehicle.id ? { ...v, ...updatedVehicle } : v
-              );
-          })
-        });
-
-        //! Here------------------------------------
-        client.subscribe("/topic/incidents", (msg) => {
-            const updatedIncidents = JSON.parse(msg.body);
-            console.log("Received incidents:", updatedIncidents);
-            if (updatedIncidents.length > 0) {
-                setIncidents(updatedIncidents);
-            }
-        })
-      },
-
-      onStompError: (frame) => {
-        console.error("❌ STOMP error", frame);
-      }
-    });
-
-    client.activate();
-
-    return () => client.deactivate();
-  }, []);
-
+const MapView = ({ incidents = [], vehicles = [], onDeleteIncident }) => {
   return (
     <div className="w-full h-[600px] rounded-xl overflow-hidden shadow-lg">
-      <MapContainer
-        center={WORLD_CENTER}
-        zoom={2}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+      <MapContainer center={WORLD_CENTER} zoom={2} style={{ width: "100%", height: "100%" }}>
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        {/* INCIDENTS */}
-        {incidents.map((inc) => (
-          <Marker
-            key={`inc-${inc.id}`}
-            position={[inc.location.latitude, inc.location.longitude]}
-            icon={createModernIcon("❗", "#FF6B6B")}
-          >
-            <Popup>
-              <b>Incident #{inc.id}</b><br />
-              Type: {inc.type}<br />
-              Status: {inc.status}<br />
-              Severity: {inc.severityLevel}
-            </Popup>
-          </Marker>
-        ))}
+        {incidents.map((inc) => {
+          let emoji = "🔥"; // default
+          let color = "#FF6B6B";
 
-        {/* VEHICLES (LIVE) */}
-        {liveVehicles.map((v) => {
+          if (inc.type === "MEDICAL") { emoji = "🩺"; color = "#1ABC9C"; }
+          else if (inc.type === "POLICE") { emoji = "👮"; color = "#34495E"; }
+
+          return (
+            <Marker
+              key={`inc-${inc.id}`}
+              position={[inc.location.latitude, inc.location.longitude]}
+              icon={createModernIcon(emoji, color)}
+            >
+              <Popup>
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <b>Incident #{inc.id}</b><br />
+                    Type: {inc.type}<br />
+                    Status: {inc.status}<br />
+                    Severity: {inc.severityLevel}
+                  </div>
+
+                  {/* Show delete button only if incident is resolved */}
+                  {inc.status === "RESOLVED" && (
+                    <button
+                      onClick={() => onDeleteIncident(inc.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {vehicles.map((v) => {
           let emoji = "🚑";
           let color = "#1ABC9C";
-
           if (v.type === "FIRE") { emoji = "🚒"; color = "#E74C3C"; }
           if (v.type === "POLICE") { emoji = "🚓"; color = "#34495E"; }
 
