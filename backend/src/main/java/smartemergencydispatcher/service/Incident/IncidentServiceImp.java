@@ -7,16 +7,15 @@ import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.incidentdto.IncidentCreateDTO;
 import smartemergencydispatcher.dto.incidentdto.IncidentDTO;
 import smartemergencydispatcher.dto.incidentdto.IncidentStatusUpdateDTO;
+import smartemergencydispatcher.dto.notification.CreateNotificationRequest;
 import smartemergencydispatcher.mapper.IncidentMapper;
 import smartemergencydispatcher.model.Incident;
 import smartemergencydispatcher.model.Vehicle;
-import smartemergencydispatcher.model.enums.IncidentStatus;
-import smartemergencydispatcher.model.enums.IncidentType;
-import smartemergencydispatcher.model.enums.SeverityLevel;
-import smartemergencydispatcher.model.enums.VehicleStatus;
+import smartemergencydispatcher.model.enums.*;
 import smartemergencydispatcher.repository.AssignmentRepository;
 import smartemergencydispatcher.repository.IncidentRepository;
 import smartemergencydispatcher.repository.VehicleRepository;
+import smartemergencydispatcher.service.notification.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,11 +31,12 @@ public class IncidentServiceImp implements IncidentService{
     private final AssignmentRepository assignmentRepository;
     private final VehicleRepository vehicleRepository ;
     private final SimpMessagingTemplate messagingTemplate;
-
+    private final NotificationService notificationService ;
     @Autowired
     public IncidentServiceImp(IncidentRepository incidentRepository,
-                              AssignmentRepository assignmentRepository, VehicleRepository vehicleRepository, SimpMessagingTemplate messagingTemplate) {
+                              AssignmentRepository assignmentRepository, VehicleRepository vehicleRepository, SimpMessagingTemplate messagingTemplate, NotificationService notificationService) {
         this.vehicleRepository = vehicleRepository;
+        this.notificationService = notificationService;
         this.incidentMapper = new IncidentMapper();
         this.incidentRepository = incidentRepository;
         this.assignmentRepository = assignmentRepository;
@@ -118,6 +118,8 @@ public class IncidentServiceImp implements IncidentService{
         System.out.println("POINT = " + incident.getLocation());
         Incident saved = incidentRepository.save(incident);
         findAll();
+        CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest(Role.DISPATCHER,NotificationType.NEW_INCIDENT,saved.getId());
+        notificationService.createNotification(createNotificationRequest);
         return incidentMapper.toDTO(saved);
     }
 
@@ -133,6 +135,9 @@ public class IncidentServiceImp implements IncidentService{
         }
         if (!incidentDTO.getStatus().equals(incident.getStatus())){
             incident.setStatus(incidentDTO.getStatus());
+            if(incidentDTO.getStatus().equals(IncidentStatus.RESOLVED)){
+                notificationService.updateNotificationStatus(incidentDTO.getId());
+            }
         }
         Incident updated = incidentRepository.updateIncident(id, incident.getStatus(), incident.getSeverityLevel());
         findAll();
@@ -177,6 +182,9 @@ public class IncidentServiceImp implements IncidentService{
         Incident updatedIncident = incidentRepository.save(incident);
 
         findAll();
+            if(statusUpdateDTO.getStatus().equals(IncidentStatus.RESOLVED)){
+                notificationService.updateNotificationStatus(id);
+            }
 
         return incidentMapper.toDTO(updatedIncident);
     }

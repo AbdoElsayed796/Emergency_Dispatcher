@@ -1,10 +1,13 @@
 package smartemergencydispatcher.service.notification;
 
 import jakarta.transaction.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.notification.CreateNotificationRequest;
 import smartemergencydispatcher.dto.notification.NotificationResponse;
+import smartemergencydispatcher.mapper.NotificationMapper;
 import smartemergencydispatcher.model.Notification;
+import smartemergencydispatcher.model.enums.Role;
 import smartemergencydispatcher.repository.IncidentRepository;
 import smartemergencydispatcher.repository.NotificationRepository;
 
@@ -17,11 +20,14 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final IncidentRepository incidentRepository;
-
+    private final NotificationMapper notificationMapper ;
+    private final SimpMessagingTemplate messagingTemplate;
     public NotificationServiceImpl(NotificationRepository notificationRepository,
-                                   IncidentRepository incidentRepository) {
+                                   IncidentRepository incidentRepository, NotificationMapper notificationMapper, SimpMessagingTemplate messagingTemplate) {
         this.notificationRepository = notificationRepository;
         this.incidentRepository = incidentRepository;
+        this.notificationMapper = notificationMapper;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -36,38 +42,35 @@ public class NotificationServiceImpl implements NotificationService {
                             .orElseThrow(() -> new RuntimeException("Incident not found"))
             );
         }
-
         notificationRepository.save(notification);
+        getNotificationsByRole(request.getRole());
     }
 
     @Override
     public List<NotificationResponse> getNotificationsByRole(Role role) {
-        return notificationRepository.findByRoleOrderByCreatedAtDesc(role)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        List<Notification> notifications = notificationRepository.findUnreadByRoleOrdered(role);
+        List<NotificationResponse> notificationResponses = notificationMapper.toDTOList(notifications);
+        messagingTemplate.convertAndSend("/topic/notification", notificationResponses);
+        return notificationMapper.toDTOList(notifications);
     }
 
     @Override
     public void markAsRead(Integer notificationId) {
         notificationRepository.markAsRead(notificationId);
+        Role role = notificationRepository.findRoleById(notificationId);
+        getNotificationsByRole(role);
     }
 
     @Override
     public void markAllAsRead(Role role) {
         notificationRepository.markAllAsRead(role);
+        getNotificationsByRole(role);
     }
+    @Override
+    public void updateNotificationStatus(Integer incidentId){
 
-    private NotificationResponse mapToResponse(Notification n) {
-        NotificationResponse dto = new NotificationResponse();
-        dto.setId(n.getId());
-        dto.setRole(n.getRole());
-        dto.setType(n.getType());
-        dto.setRead(n.isRead());
-        dto.setCreatedAt(n.getCreatedAt());
-        dto.setIncidentId(
-                n.getIncident() != null ? n.getIncident().getId() : null
-        );
-        return dto;
+       notificationRepository.markIncidentResolvedAndUnread(incidentId);
+       Role role = notificationRepository.findRoleByIncidentId(incidentId);
+       getNotificationsByRole(role);
     }
 }

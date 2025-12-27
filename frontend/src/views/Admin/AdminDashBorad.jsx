@@ -11,12 +11,15 @@ import ResponseTimeReports from "./Reports/ResponseTimeReports";
 import UtilizationReports from './Reports/UtilizationReports';
 import TopPerformingUnits from "./Reports/TopPerformingUnits";
 
-const AdminDashboard = () => {
+// WebSocket
+import SockJS from "sockjs-client/dist/sockjs";
+import { Client } from "@stomp/stompjs";
 
+const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [activeIncidents, setActiveIncidents] = useState([]);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchDashboardData = async () => {
@@ -28,6 +31,7 @@ const AdminDashboard = () => {
      
       const statsData = await statsRes.json();
       const incidentsData = await incidentsRes.json();
+      
       console.log(incidentsData);
       setStats(statsData);
       setActiveIncidents(incidentsData);
@@ -41,6 +45,35 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+  }, []);
+
+  // ---------- WEBSOCKET ----------
+  useEffect(() => {
+    const client = new Client({
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      reconnectDelay: 5000,
+
+      onConnect: () => {
+        console.log("✅ Admin WebSocket connected");
+
+        // Subscribe to incidents updates for real-time table updates
+        client.subscribe("/topic/incidents", (msg) => {
+          const updatedIncidents = JSON.parse(msg.body);
+          if (updatedIncidents.length > 0) {
+            setActiveIncidents(updatedIncidents.filter(
+              inc => inc.status === 'REPORTED' || inc.status === 'ASSIGNED'
+            ));
+          }
+        });
+      },
+
+      onStompError: (frame) => {
+        console.error("❌ STOMP error", frame);
+      }
+    });
+
+    client.activate();
+    return () => client.deactivate();
   }, []);
 
   const getSeverityColor = (severity) => {
@@ -57,7 +90,6 @@ const AdminDashboard = () => {
         return "bg-gray-500 text-gray-100 border-gray-600";
     }
   };
-  
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -76,30 +108,48 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-20 text-gray-700 text-lg">Loading dashboard...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading dashboard...</p>
+        </div>
+      </div>
     );
   }
+
   if (error) {
     return (
-      <div className="text-center py-20 text-red-600 text-lg">{error}</div>
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={fetchDashboardData}
+            className="bg-red-100 hover:bg-red-200 px-3 py-1 rounded text-sm font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Admin Dashboard</h2>
+       <div>
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        </div>
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl shadow-sm border">
           <div className="flex justify-between">
             <div>
               <p className="text-gray-500">Total Users</p>
-              <h3 className="text-3xl font-bold"> {stats?.totalUsers || 0}</h3>
+              <h3 className="text-3xl font-bold">{stats?.totalUsers || 0}</h3>
             </div>
             <Users className="w-10 h-10 text-blue-500" />
           </div>
         </div>
 
-        {/* Vehicles */}
         <div className="bg-white p-5 rounded-xl shadow-sm border">
           <div className="flex justify-between">
             <div>
@@ -113,7 +163,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Stations */}
         <div className="bg-white p-5 rounded-xl shadow-sm border">
           <div className="flex justify-between">
             <div>
@@ -124,7 +173,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Pending Requests */}
         <div className="bg-white p-5 rounded-xl shadow-sm border">
           <div className="flex justify-between">
             <div>
@@ -136,7 +184,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-
+      {/* Active Incidents Table */}
       <div className="bg-white p-6 rounded-xl shadow border">
         <h3 className="text-lg font-bold mb-4">Active Incidents</h3>
 
@@ -158,9 +206,9 @@ const AdminDashboard = () => {
                 <td className="px-3 py-2">{incident.type}</td>
                 <td className="px-3 py-2 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {incident.location.latitude }
-                  {"   , "}
-                  {incident.location.longitude }
+                  {incident.location.latitude}
+                  {", "}
+                  {incident.location.longitude}
                 </td>
                 <td className="px-3 py-2">
                   <span
@@ -183,15 +231,11 @@ const AdminDashboard = () => {
           <p className="text-gray-500 text-center py-4">No active incidents</p>
         )}
       </div>
-      <div className="mt-8">
-        <ResponseTimeReports />
-      </div>
-      <div className="mt-8">
-        <UtilizationReports />
-      </div>
-      <div className="mt-8">
-        <TopPerformingUnits />
-      </div>
+
+      {/* Reports */}
+      <ResponseTimeReports />
+      <UtilizationReports />
+      <TopPerformingUnits />
     </div>
   );
 };

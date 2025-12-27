@@ -59,6 +59,21 @@ CREATE TABLE IF NOT EXISTS assignment (
 	FOREIGN KEY (dispatcher_user_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
+CREATE TABLE notifications (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  role ENUM('ADMIN', 'DISPATCHER') NOT NULL,
+  type ENUM(
+    'NON_AVAILABLE_VEHICLE',
+    'NEW_INCIDENT',
+    'INCIDENT_RESOLVED'
+  ) NOT NULL,
+  incident_id INT NULL, 
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (incident_id) REFERENCES incident(id) ON DELETE SET NULL 
+);
+
+
 -- 1. Users first
 INSERT INTO user (name, email, password, phone, role)
 VALUES 
@@ -88,3 +103,13 @@ VALUES
 ('FIRE', 'HIGH', 'ASSIGNED', NOW(), POINT(40.7489, -73.9680)),
 ('MEDICAL', 'CRITICAL', 'RESOLVED', NOW(), POINT(40.7580, -73.9855)),
 ('POLICE', 'MEDIUM', 'REPORTED', NOW(), POINT(40.7614, -73.9776));
+
+
+-- ADMIN notification: vehicle unavailable
+INSERT INTO notifications (role, type, incident_id, is_read)
+VALUES 
+('ADMIN', 'NON_AVAILABLE_VEHICLE', NULL, FALSE),
+('DISPATCHER', 'NEW_INCIDENT', 3, FALSE),
+('DISPATCHER', 'INCIDENT_RESOLVED', 2, TRUE),
+('ADMIN', 'NON_AVAILABLE_VEHICLE', NULL, TRUE),
+('DISPATCHER', 'NEW_INCIDENT', 1, FALSE);

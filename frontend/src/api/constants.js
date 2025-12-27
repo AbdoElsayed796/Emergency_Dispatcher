@@ -105,3 +105,11 @@ export const SUCCESS_MESSAGES = {
   ACCEPTED: 'Assignment accepted successfully.',
   COMPLETED: 'Assignment completed successfully.',
 };
+
+
+// Notification endpoints
+export const NOTIFICATION_ENDPOINTS = {
+  GET_BY_ROLE: (role) => `/api/notifications/${role}`,
+  MARK_AS_READ: (id) => `/api/notifications/${id}/read`,
+  MARK_ALL_AS_READ: (role) => `/api/notifications/read-all/${role}`,
+};

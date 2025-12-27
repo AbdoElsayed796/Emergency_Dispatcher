@@ -154,3 +154,15 @@ export const getPriorityColor = (severity) => {
             return 'text-gray-600 bg-gray-50';
     }
 };
+
+
+/**
+ * Format ISO timestamp to human-readable time
+ * @param {string | Date} isoTime - timestamp from backend
+ * @returns {string} formatted time like "12:30 PM" or "2 hours ago"
+ */
+export const formatNotificationTime = (isoTime) => {
+    if (!isoTime) return '';
+    const date = new Date(isoTime);
+    return date.toLocaleString(); // you can customize format
+};
