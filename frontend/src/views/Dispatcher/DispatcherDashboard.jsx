@@ -9,7 +9,7 @@ import VehiclesGrid from './VehiclesGrid';
 import MapView from './MapView';
 import { vehicleService, incidentService , notificationService } from "../../api/services/index.js";
 
-// WebSocket
+
 import SockJS from "sockjs-client/dist/sockjs";
 import { Client } from "@stomp/stompjs";
 
@@ -35,15 +35,6 @@ const DispatcherDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // const notifications = [
-    //     { id: 1, type: 'urgent', title: 'Critical Incident Unassigned', message: 'INC-002 - Building fire has been waiting for 6 minutes', time: '2 min ago', read: false },
-    //     { id: 2, type: 'warning', title: 'Vehicle Delayed', message: 'FIRE-03 is experiencing traffic delays. ETA +5 minutes', time: '5 min ago', read: false },
-    //     { id: 3, type: 'info', title: 'New Incident Reported', message: 'INC-005 - Medical emergency at Downtown Plaza', time: '10 min ago', read: true },
-    //     { id: 4, type: 'success', title: 'Incident Resolved', message: 'INC-004 has been successfully resolved by AMB-02', time: '15 min ago', read: true },
-    //     { id: 5, type: 'warning', title: 'Low Vehicle Availability', message: 'Only 2 ambulances available in Zone A', time: '20 min ago', read: true }
-    // ];
-
-    // Fetch all data on component mount
     useEffect(() => {
         fetchAllData();
     }, []);
