@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import smartemergencydispatcher.model.Notification;
 import smartemergencydispatcher.model.enums.Role;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface NotificationRepository extends JpaRepository<Notification, Integer> {
@@ -46,5 +47,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
             "WHERE n.incident.id = :incidentId AND n.type = 'NEW_INCIDENT'")
     void markIncidentResolvedAndUnread(@Param("incidentId") Integer incidentId);
 
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.read = true")
+    int deleteByReadTrue();
+
+    // Delete read notifications created before a specific date
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.read = true AND n.createdAt < :date")
+    int deleteByReadTrueAndCreatedAtBefore(LocalDateTime date);
 }
 
