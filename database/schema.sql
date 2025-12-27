@@ -1,14 +1,12 @@
 CREATE DATABASE IF NOT EXISTS smart_emergency_dispatcher;
 USE smart_emergency_dispatcher;
 
-
 -- Drop tables in reverse order of dependencies (child tables first)
 DROP TABLE IF EXISTS assignment;
 DROP TABLE IF EXISTS vehicle;
 DROP TABLE IF EXISTS incident;
 DROP TABLE IF EXISTS station;
 DROP TABLE IF EXISTS user;
-
 
 CREATE TABLE IF NOT EXISTS user (
 	id INT PRIMARY KEY AUTO_INCREMENT,
@@ -43,7 +41,7 @@ CREATE TABLE IF NOT EXISTS incident (
 	id INT PRIMARY KEY AUTO_INCREMENT,
 	type ENUM('FIRE', 'POLICE', 'MEDICAL') NOT NULL,
 	severity_level ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NOT NULL,
-    status ENUM('REPORTED', 'ASSIGNED', 'RESOLVED') NOT NULL,
+	status ENUM('REPORTED', 'ASSIGNED', 'RESOLVED') NOT NULL,
 	reported_time TIMESTAMP NOT NULL,
 	location POINT NOT NULL
 );
@@ -56,11 +54,10 @@ CREATE TABLE IF NOT EXISTS assignment (
 	time_assigned TIMESTAMP NOT NULL,
 	time_accepted TIMESTAMP,
 	time_finished TIMESTAMP,
-	FOREIGN KEY (incident_id) REFERENCES incident(id),
-	FOREIGN KEY (vehicle_id) REFERENCES vehicle(id),
-	FOREIGN KEY (dispatcher_user_id) REFERENCES user(id)
+	FOREIGN KEY (incident_id) REFERENCES incident(id) ON DELETE CASCADE,
+	FOREIGN KEY (vehicle_id) REFERENCES vehicle(id) ON DELETE CASCADE,
+	FOREIGN KEY (dispatcher_user_id) REFERENCES user(id) ON DELETE CASCADE
 );
-
 
 -- 1. Users first
 INSERT INTO user (name, email, password, phone, role)
