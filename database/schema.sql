@@ -1,14 +1,12 @@
 CREATE DATABASE IF NOT EXISTS smart_emergency_dispatcher;
 USE smart_emergency_dispatcher;
 
-
 -- Drop tables in reverse order of dependencies (child tables first)
 DROP TABLE IF EXISTS assignment;
 DROP TABLE IF EXISTS vehicle;
 DROP TABLE IF EXISTS incident;
 DROP TABLE IF EXISTS station;
 DROP TABLE IF EXISTS user;
-
 
 CREATE TABLE IF NOT EXISTS user (
 	id INT PRIMARY KEY AUTO_INCREMENT,
@@ -43,7 +41,7 @@ CREATE TABLE IF NOT EXISTS incident (
 	id INT PRIMARY KEY AUTO_INCREMENT,
 	type ENUM('FIRE', 'POLICE', 'MEDICAL') NOT NULL,
 	severity_level ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NOT NULL,
-    status ENUM('REPORTED', 'ASSIGNED', 'RESOLVED') NOT NULL,
+	status ENUM('REPORTED', 'ASSIGNED', 'RESOLVED') NOT NULL,
 	reported_time TIMESTAMP NOT NULL,
 	location POINT NOT NULL
 );
@@ -56,9 +54,23 @@ CREATE TABLE IF NOT EXISTS assignment (
 	time_assigned TIMESTAMP NOT NULL,
 	time_accepted TIMESTAMP,
 	time_finished TIMESTAMP,
-	FOREIGN KEY (incident_id) REFERENCES incident(id),
-	FOREIGN KEY (vehicle_id) REFERENCES vehicle(id),
-	FOREIGN KEY (dispatcher_user_id) REFERENCES user(id)
+	FOREIGN KEY (incident_id) REFERENCES incident(id) ON DELETE CASCADE,
+	FOREIGN KEY (vehicle_id) REFERENCES vehicle(id) ON DELETE CASCADE,
+	FOREIGN KEY (dispatcher_user_id) REFERENCES user(id) ON DELETE CASCADE
+);
+
+CREATE TABLE notifications (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  role ENUM('ADMIN', 'DISPATCHER') NOT NULL,
+  type ENUM(
+    'NON_AVAILABLE_VEHICLE',
+    'NEW_INCIDENT',
+    'INCIDENT_RESOLVED'
+  ) NOT NULL,
+  incident_id INT NULL, 
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (incident_id) REFERENCES incident(id) ON DELETE SET NULL 
 );
 
 
@@ -91,3 +103,13 @@ VALUES
 ('FIRE', 'HIGH', 'ASSIGNED', NOW(), POINT(40.7489, -73.9680)),
 ('MEDICAL', 'CRITICAL', 'RESOLVED', NOW(), POINT(40.7580, -73.9855)),
 ('POLICE', 'MEDIUM', 'REPORTED', NOW(), POINT(40.7614, -73.9776));
+
+
+-- ADMIN notification: vehicle unavailable
+INSERT INTO notifications (role, type, incident_id, is_read)
+VALUES 
+('ADMIN', 'NON_AVAILABLE_VEHICLE', NULL, FALSE),
+('DISPATCHER', 'NEW_INCIDENT', 3, FALSE),
+('DISPATCHER', 'INCIDENT_RESOLVED', 2, TRUE),
+('ADMIN', 'NON_AVAILABLE_VEHICLE', NULL, TRUE),
+('DISPATCHER', 'NEW_INCIDENT', 1, FALSE);

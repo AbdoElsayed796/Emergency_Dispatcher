@@ -151,6 +151,12 @@
             <version>4.0.0</version>
         </dependency>
 
+        <!-- Redis (already used by teammates) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
 
 
 
