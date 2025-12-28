@@ -2,19 +2,26 @@ package smartemergencydispatcher.service.RedisService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import redis.clients.jedis.Jedis;
 import smartemergencydispatcher.dto.locationDTO.LocationDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleDataDTO;
 import smartemergencydispatcher.model.enums.VehicleStatus;
 import smartemergencydispatcher.redis.Redis;
+import redis.clients.jedis.JedisPubSub;
 
 import java.util.Map;
 
 @Service
 public class RedisServiceImp implements RedisService{
     private final Redis redis;
+    private Jedis subscriberJedis;
+    private Jedis publisherJedis;
     @Autowired
     public RedisServiceImp (Redis redis){
         this.redis = redis ;
+        this.subscriberJedis =  new Jedis("localhost", 6379); 
+        this.publisherJedis = new Jedis("localhost", 6379);
     }
 
     @Override
@@ -49,4 +56,20 @@ public class RedisServiceImp implements RedisService{
         }
         return vehicleDataDTO ;
     }
+    @Override
+    public void publish(String channel, String message) {
+        publisherJedis.publish(channel, message);
+    }
+    @Override
+    public void subscribe(String channel) {
+        new Thread(() -> {
+            subscriberJedis.subscribe(new JedisPubSub() {
+                @Override
+                public void onMessage(String channel, String message) {
+                    System.out.println("Received message: " + message + " from channel: " + channel);
+                }
+            }, channel);
+        }).start();
+    }
+    
 }

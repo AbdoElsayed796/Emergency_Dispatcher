@@ -34,4 +34,9 @@ public class RedisController {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "cannot get vehicle data" , "data" , ans));
         }
     }
+    @PostMapping("/publish")
+    public String publishMessage(@RequestParam String channel, @RequestParam String message) {
+        redisServiceImp.publish(channel, message);
+        return "Message published to channel: " + channel;
+    }
 }
