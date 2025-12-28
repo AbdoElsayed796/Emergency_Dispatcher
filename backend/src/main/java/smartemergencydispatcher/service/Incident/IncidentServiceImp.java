@@ -2,25 +2,24 @@ package smartemergencydispatcher.service.Incident;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.incidentdto.IncidentCreateDTO;
 import smartemergencydispatcher.dto.incidentdto.IncidentDTO;
 import smartemergencydispatcher.dto.incidentdto.IncidentStatusUpdateDTO;
+import smartemergencydispatcher.dto.notification.CreateNotificationRequest;
 import smartemergencydispatcher.mapper.IncidentMapper;
 import smartemergencydispatcher.model.Incident;
 import smartemergencydispatcher.model.Vehicle;
-import smartemergencydispatcher.model.enums.IncidentStatus;
-import smartemergencydispatcher.model.enums.IncidentType;
-import smartemergencydispatcher.model.enums.SeverityLevel;
-import smartemergencydispatcher.model.enums.VehicleStatus;
+import smartemergencydispatcher.model.enums.*;
 import smartemergencydispatcher.repository.AssignmentRepository;
 import smartemergencydispatcher.repository.IncidentRepository;
 import smartemergencydispatcher.repository.VehicleRepository;
+import smartemergencydispatcher.service.notification.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -31,18 +30,22 @@ public class IncidentServiceImp implements IncidentService{
     private final IncidentMapper incidentMapper;
     private final AssignmentRepository assignmentRepository;
     private final VehicleRepository vehicleRepository ;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationService notificationService ;
     @Autowired
     public IncidentServiceImp(IncidentRepository incidentRepository,
-                              AssignmentRepository assignmentRepository, VehicleRepository vehicleRepository) {
+                              AssignmentRepository assignmentRepository, VehicleRepository vehicleRepository, SimpMessagingTemplate messagingTemplate, NotificationService notificationService) {
         this.vehicleRepository = vehicleRepository;
+        this.notificationService = notificationService;
         this.incidentMapper = new IncidentMapper();
         this.incidentRepository = incidentRepository;
         this.assignmentRepository = assignmentRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
     public IncidentDTO getIncidentById(Integer id) {
-        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));;
+        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
         return incidentMapper.toDTO(incident);
     }
 
@@ -96,11 +99,14 @@ public class IncidentServiceImp implements IncidentService{
                 incidentDTOs.add(incidentMapper.toDTO(i));
             }
         }
+        messagingTemplate.convertAndSend("/topic/incidents", incidentDTOs);
         return incidentDTOs;
     }
+
     @Override
     public void deleteById(Integer id) {
         incidentRepository.deleteById(id);
+        findAll();
     }
 
     @Override
@@ -111,12 +117,15 @@ public class IncidentServiceImp implements IncidentService{
         System.out.println("Incident = " + incident);
         System.out.println("POINT = " + incident.getLocation());
         Incident saved = incidentRepository.save(incident);
+        findAll();
+        CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest(Role.DISPATCHER,NotificationType.NEW_INCIDENT,saved.getId());
+        notificationService.createNotification(createNotificationRequest);
         return incidentMapper.toDTO(saved);
     }
 
     @Override
     public IncidentDTO updateIncident(Integer id, IncidentDTO incidentDTO) {
-        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));;
+        Incident incident = incidentRepository.getIncidentById(id).orElseThrow(() -> new RuntimeException("Incident not found with id: " + id));
         if (incident == null) {
             return new IncidentDTO();
         }
@@ -126,8 +135,12 @@ public class IncidentServiceImp implements IncidentService{
         }
         if (!incidentDTO.getStatus().equals(incident.getStatus())){
             incident.setStatus(incidentDTO.getStatus());
+            if(incidentDTO.getStatus().equals(IncidentStatus.RESOLVED)){
+                notificationService.updateNotificationStatus(incidentDTO.getId());
+            }
         }
         Incident updated = incidentRepository.updateIncident(id, incident.getStatus(), incident.getSeverityLevel());
+        findAll();
         return incidentMapper.toDTO(updated);
 
     }
@@ -167,6 +180,11 @@ public class IncidentServiceImp implements IncidentService{
 
         incident.setStatus(statusUpdateDTO.getStatus());
         Incident updatedIncident = incidentRepository.save(incident);
+
+        findAll();
+            if(statusUpdateDTO.getStatus().equals(IncidentStatus.RESOLVED)){
+                notificationService.updateNotificationStatus(id);
+            }
 
         return incidentMapper.toDTO(updatedIncident);
     }

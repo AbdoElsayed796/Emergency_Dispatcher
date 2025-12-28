@@ -45,7 +45,7 @@ export const INCIDENT_ENDPOINTS = {
   CREATE: '/incidents/create',
   UPDATE: (id) => `/incidents/${id}`,
   UPDATE_STATUS: (id) => `/incidents/${id}/status`,
-  DELETE: (id) => `/incidents/${id}`,
+  DELETE: (id) => `/incidents/delete/${id}`,
   GET_BY_STATUS: (status) => `/incidents/status/${status}`,
   GET_BY_SEVERITY: (severity) => `/incidents/severity/${severity}`,
   GET_RECENT: '/incidents/recent',
@@ -104,4 +104,12 @@ export const SUCCESS_MESSAGES = {
   ASSIGNED: 'Assignment created successfully.',
   ACCEPTED: 'Assignment accepted successfully.',
   COMPLETED: 'Assignment completed successfully.',
+};
+
+
+// Notification endpoints
+export const NOTIFICATION_ENDPOINTS = {
+  GET_BY_ROLE: (role) => `/api/notifications/${role}`,
+  MARK_AS_READ: (id) => `/api/notifications/${id}/read`,
+  MARK_ALL_AS_READ: (role) => `/api/notifications/read-all/${role}`,
 };
