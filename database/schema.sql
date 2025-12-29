@@ -4,6 +4,7 @@ USE smart_emergency_dispatcher;
 -- Drop tables in reverse order of dependencies (child tables first)
 DROP TABLE IF EXISTS assignment;
 DROP TABLE IF EXISTS vehicle;
+DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS incident;
 DROP TABLE IF EXISTS station;
 DROP TABLE IF EXISTS user;
