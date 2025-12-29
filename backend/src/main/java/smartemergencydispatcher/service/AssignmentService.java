@@ -1,10 +1,10 @@
 package smartemergencydispatcher.service;
 
-
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.assignmentdto.AssignmentCreateDTO;
+import smartemergencydispatcher.dto.simulation.SimulationRequestDTO;
 import smartemergencydispatcher.mapper.AssignmentMapper;
 import smartemergencydispatcher.model.Assignment;
 import smartemergencydispatcher.model.Incident;
@@ -16,6 +16,8 @@ import smartemergencydispatcher.repository.UserRepository;
 import smartemergencydispatcher.repository.VehicleRepository;
 import smartemergencydispatcher.model.enums.IncidentStatus;
 import smartemergencydispatcher.model.enums.VehicleStatus;
+import org.locationtech.jts.geom.Point;
+import smartemergencydispatcher.service.SimulationService.SimulationService;
 
 import java.time.LocalDateTime;
 
@@ -28,6 +30,7 @@ public class AssignmentService {
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
     private final AssignmentMapper assignmentMapper;
+    private final SimulationService simulationService;
 
     @Transactional
     public Assignment assignVehicleToIncident(AssignmentCreateDTO assignmentCreateDTO){
@@ -57,6 +60,36 @@ public class AssignmentService {
         incident.setStatus(IncidentStatus.ASSIGNED);
         incidentRepository.save(incident);
 
-        return assignmentRepository.save(assignment);
+        Assignment savedAssignment = assignmentRepository.save(assignment);
+
+        // 🚀 TRIGGER SIMULATION
+        triggerVehicleSimulation(vehicle, incident);
+
+        return savedAssignment;
+    }
+
+    private void triggerVehicleSimulation(Vehicle vehicle, Incident incident) {
+        try {
+            Point vehicleLocation = vehicle.getLocation();
+            Point incidentLocation = incident.getLocation();
+
+            SimulationRequestDTO simulationRequest = new SimulationRequestDTO();
+            simulationRequest.setVehicleId(vehicle.getId());
+            simulationRequest.setIncidentId(incident.getId());
+            simulationRequest.setStartLatitude(vehicleLocation.getY());
+            simulationRequest.setStartLongitude(vehicleLocation.getX());
+            simulationRequest.setEndLatitude(incidentLocation.getY());
+            simulationRequest.setEndLongitude(incidentLocation.getX());
+            simulationRequest.setInterval(0.2); // Update every 0.5 seconds
+
+            simulationService.startSimulation(simulationRequest);
+
+            System.out.println("🎯 Simulation triggered: Vehicle " + vehicle.getId()
+                    + " → Incident at (" + incidentLocation.getY() + ", " + incidentLocation.getX() + ")");
+
+        } catch (Exception e) {
+            System.err.println("⚠️ Failed to trigger simulation: " + e.getMessage());
+            // Don't fail the assignment if simulation fails
+        }
     }
 }

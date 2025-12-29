@@ -6,16 +6,12 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.locationDTO.LocationDTO;
-import smartemergencydispatcher.dto.vehicledto.AvailableVehicleDTO;
-import smartemergencydispatcher.dto.vehicledto.VehicleDTO;
-import smartemergencydispatcher.dto.vehicledto.VehicleCreateDTO;
-import smartemergencydispatcher.dto.vehicledto.VehicleUpdateDTO;
-import smartemergencydispatcher.dto.vehicledto.VehicleDataDTO;
-import smartemergencydispatcher.dto.vehicledto.VehicleLiveDTO;
+import smartemergencydispatcher.dto.vehicledto.*;
 import smartemergencydispatcher.mapper.VehicleMapper;
 import smartemergencydispatcher.model.Station;
 import smartemergencydispatcher.model.User;
 import smartemergencydispatcher.model.Vehicle;
+import smartemergencydispatcher.model.enums.VehicleStatus;
 import smartemergencydispatcher.repository.StationRepository;
 import smartemergencydispatcher.repository.UserRepository;
 import smartemergencydispatcher.repository.VehicleRepository;
@@ -154,7 +150,7 @@ public class VehicleServiceImpl implements VehicleService {
             liveDTO.setLatitude(location.getY());
             liveDTO.setLongitude(location.getX());
             liveDTO.setType(vehicle.getType().toString());
-
+            System.out.println("type is "+liveDTO.getType());
             String json = objectMapper.writeValueAsString(liveDTO);
             jedis.publish("vehicle-updates", json);
 
@@ -164,5 +160,32 @@ public class VehicleServiceImpl implements VehicleService {
             System.err.println("❌ Error updating Redis and broadcasting: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void updateVehicleLocation(VehicleLocationUpdateDTO dto) {
+        Vehicle vehicle = vehicleRepository.findById(dto.getVehicleId())
+                .orElseThrow(() -> new RuntimeException("Vehicle not found with id: " + dto.getVehicleId()));
+
+        // Update location
+        Point newLocation = geometryFactory.createPoint(
+                new Coordinate(dto.getLongitude(), dto.getLatitude())
+        );
+        vehicle.setLocation(newLocation);
+
+        // Update status if provided
+        if (dto.getStatus() != null && !dto.getStatus().isEmpty()) {
+            try {
+                vehicle.setStatus(VehicleStatus.valueOf(dto.getStatus()));
+            } catch (IllegalArgumentException e) {
+                System.err.println("⚠️ Invalid status: " + dto.getStatus());
+            }
+        }
+
+        // Save to database
+        vehicleRepository.save(vehicle);
+
+        // This will update Redis and broadcast via WebSocket
+        updateRedisAndBroadcast(vehicle);
     }
 }
