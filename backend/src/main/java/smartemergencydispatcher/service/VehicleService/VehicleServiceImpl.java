@@ -10,6 +10,8 @@ import smartemergencydispatcher.dto.vehicledto.AvailableVehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleCreateDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleUpdateDTO;
+import smartemergencydispatcher.dto.vehicledto.VehicleDataDTO;
+import smartemergencydispatcher.dto.vehicledto.VehicleLiveDTO;
 import smartemergencydispatcher.mapper.VehicleMapper;
 import smartemergencydispatcher.model.Station;
 import smartemergencydispatcher.model.User;
@@ -17,6 +19,11 @@ import smartemergencydispatcher.model.Vehicle;
 import smartemergencydispatcher.repository.StationRepository;
 import smartemergencydispatcher.repository.UserRepository;
 import smartemergencydispatcher.repository.VehicleRepository;
+import smartemergencydispatcher.service.RedisService.RedisService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,8 +35,25 @@ public class VehicleServiceImpl implements VehicleService {
     private final VehicleRepository vehicleRepository;
     private final StationRepository stationRepository;
     private final UserRepository userRepository;
-    private final VehicleMapper vehicleMapper; // Injected mapper
+    private final VehicleMapper vehicleMapper;
+    private final RedisService redisService;
     private final GeometryFactory geometryFactory = new GeometryFactory();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // Lazy initialization of JedisPool
+    private JedisPool getJedisPool() {
+        if (jedisPool == null) {
+            synchronized (this) {
+                if (jedisPool == null) {
+                    JedisPoolConfig poolConfig = new JedisPoolConfig();
+                    poolConfig.setMaxTotal(30);
+                    jedisPool = new JedisPool(poolConfig, "localhost", 6379);
+                }
+            }
+        }
+        return jedisPool;
+    }
+    private JedisPool jedisPool;
 
     @Override
     public List<VehicleDTO> getAllVehicles() {
@@ -55,7 +79,12 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.setStation(station);
         vehicle.setResponder(responder);
 
-        return vehicleMapper.toDTO(vehicleRepository.save(vehicle));
+        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+
+        // Update Redis and trigger WebSocket broadcast
+        updateRedisAndBroadcast(savedVehicle);
+
+        return vehicleMapper.toDTO(savedVehicle);
     }
 
     @Override
@@ -71,7 +100,12 @@ public class VehicleServiceImpl implements VehicleService {
         vehicle.setLocation(convertToPoint(dto.getLocation()));
         vehicle.setResponder(responder);
 
-        return vehicleMapper.toDTO(vehicleRepository.save(vehicle));
+        Vehicle updatedVehicle = vehicleRepository.save(vehicle);
+
+        // Update Redis and trigger WebSocket broadcast
+        updateRedisAndBroadcast(updatedVehicle);
+
+        return vehicleMapper.toDTO(updatedVehicle);
     }
 
     @Override
@@ -89,5 +123,46 @@ public class VehicleServiceImpl implements VehicleService {
 
     private Point convertToPoint(LocationDTO dto) {
         return geometryFactory.createPoint(new Coordinate(dto.getLongitude(), dto.getLatitude()));
+    }
+
+    /**
+     * Updates vehicle data in Redis and broadcasts to WebSocket
+     * Broadcasts both location AND status changes
+     */
+    private void updateRedisAndBroadcast(Vehicle vehicle) {
+        try (Jedis jedis = getJedisPool().getResource()) {
+            Point location = vehicle.getLocation();
+
+            // Update Redis with vehicle data
+            VehicleDataDTO vehicleDataDTO = new VehicleDataDTO();
+            vehicleDataDTO.setId(vehicle.getId());
+            vehicleDataDTO.setStatus(vehicle.getStatus());
+
+            LocationDTO locationDTO = new LocationDTO(
+                    location.getY(), // latitude
+                    location.getX()  // longitude
+            );
+            vehicleDataDTO.setLocationDTO(locationDTO);
+
+            // Store in Redis
+            redisService.setVehicleData(vehicleDataDTO);
+
+            // Publish complete vehicle info (location + status + type) to WebSocket
+            VehicleLiveDTO liveDTO = new VehicleLiveDTO();
+            liveDTO.setId(vehicle.getId());
+            liveDTO.setStatus(vehicle.getStatus().toString());
+            liveDTO.setLatitude(location.getY());
+            liveDTO.setLongitude(location.getX());
+            liveDTO.setType(vehicle.getType().toString());
+
+            String json = objectMapper.writeValueAsString(liveDTO);
+            jedis.publish("vehicle-updates", json);
+
+            System.out.println("📡 Broadcasted vehicle update: ID=" + vehicle.getId() + ", Status=" + vehicle.getStatus());
+
+        } catch (Exception e) {
+            System.err.println("❌ Error updating Redis and broadcasting: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

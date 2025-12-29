@@ -72,44 +72,90 @@ const DispatcherDashboard = () => {
     };
 
     // ---------- WEBSOCKET ----------
-    useEffect(() => {
+    useEffect(() => { 
         const client = new Client({
             webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
             reconnectDelay: 5000,
-
+            
             onConnect: () => {
-                console.log("✅ WebSocket connected");
-
-                client.subscribe("/topic/vehicles", (msg) => {
-                    const updatedVehicle = JSON.parse(msg.body);
-                    setVehicles(prev => {
-                        const exists = prev.find(v => v.id === updatedVehicle.id);
-                        if (!exists) return [...prev, updatedVehicle];
-                        return prev.map(v => v.id === updatedVehicle.id ? { ...v, ...updatedVehicle } : v);
-                    });
-                });
-
-                client.subscribe("/topic/incidents", (msg) => {
-                    const updatedIncidents = JSON.parse(msg.body);
-                    if (updatedIncidents.length > 0) setIncidents(updatedIncidents);
-                });
-
+                console.log("✅ WebSocket connected!");
                 client.subscribe("/topic/notification", (msg) => {
                     console.log("WS NOTIFICATIONS:", msg.body);
                     setNotifications(JSON.parse(msg.body));
                 });
+                // Subscribe to incidents
+                client.subscribe("/topic/incidents", (msg) => {
+                    console.log("📨 Incidents updated");
+                    const updatedIncidents = JSON.parse(msg.body);
                 
-            },
+                    setIncidents(updatedIncidents);
+                    calculateStats(updatedIncidents, vehicles);
+                });
+                
+                client.subscribe("/topic/vehicles", (msg) => {
+                    console.log("🚗 Vehicle update received!");
+                    console.log("Raw message:", msg.body);
+                    
+                    try {
+                        const updatedVehicle = JSON.parse(msg.body);
+                        console.log("Parsed vehicle:", updatedVehicle);
+                        
+                        setVehicles(prev => {
+                            const exists = prev.find(v => v.id === updatedVehicle.id);
+                            
+                            if (!exists) {
+                                console.log("Adding new vehicle:", updatedVehicle.id);
+                                return [...prev, {
+                                    id: updatedVehicle.id,
+                                    status: updatedVehicle.status,
+                                    type: updatedVehicle.type,
+                                    location: {
+                                        latitude: updatedVehicle.latitude,
+                                        longitude: updatedVehicle.longitude
+                                    }
+                                }];
+                            }
+                            
+                            console.log("Updating existing vehicle:", updatedVehicle.id);
+                            return prev.map(v => {
+                                if (v.id === updatedVehicle.id) {
+                                    return {
+                                        ...v,
+                                        status: updatedVehicle.status,
+                                        type: updatedVehicle.type,
+                                        location: {
+                                            latitude: updatedVehicle.latitude,
+                                            longitude: updatedVehicle.longitude
+                                        }
+                                    };
+                                }
+                                return v;
+                            });
+                        });
+                    } catch (error) {
+                        console.error("Error parsing vehicle update:", error);
+                    }
+                });
 
+            },
+            
             onStompError: (frame) => {
-                console.error("❌ STOMP error", frame);
+                console.error("❌ STOMP error:", frame);
+            },
+            
+            onDisconnect: () => {
+                console.log("❌ WebSocket disconnected");
             }
         });
-
+        
         client.activate();
-        return () => client.deactivate();
+        console.log("🔌 WebSocket client activated");
+        
+        return () => {
+            console.log("🔌 Cleaning up WebSocket connection");
+            client.deactivate();
+        };
     }, []);
-
     // Filter logic
     const filteredIncidents = incidents.filter(inc => {
         if (selectedType !== 'All Types' && inc.type !== selectedType) return false;
