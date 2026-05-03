@@ -1,9 +1,6 @@
 package smartemergencydispatcher.service.VehicleService;
 
-import smartemergencydispatcher.dto.vehicledto.AvailableVehicleDTO;
-import smartemergencydispatcher.dto.vehicledto.VehicleDTO;
-import smartemergencydispatcher.dto.vehicledto.VehicleCreateDTO;
-import smartemergencydispatcher.dto.vehicledto.VehicleUpdateDTO;
+import smartemergencydispatcher.dto.vehicledto.*;
 
 import java.util.List;
 
@@ -14,4 +11,5 @@ public interface VehicleService {
     void deleteVehicle(Integer id);
 
     List<AvailableVehicleDTO> getAllAvailableVehicles();
+    void updateVehicleLocation(VehicleLocationUpdateDTO dto);
 }

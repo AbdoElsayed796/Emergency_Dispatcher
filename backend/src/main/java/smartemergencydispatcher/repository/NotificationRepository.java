@@ -28,7 +28,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
     @Query("SELECT n.role FROM Notification n WHERE n.id = :id")
     Role findRoleById(@Param("id") Integer id);
 
-    @Query("SELECT n.role FROM Notification n WHERE n.incident.id = :incidentId")
+    @Query("SELECT n.role FROM Notification n WHERE n.incident.id = :incidentId LIMIT 1")
     Role findRoleByIncidentId(@Param("incidentId") Integer incidentId);
 
     @Modifying

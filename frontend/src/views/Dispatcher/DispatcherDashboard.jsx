@@ -70,7 +70,24 @@ const DispatcherDashboard = () => {
             onRoute: vehiclesData.filter(v => v.status === 'ON_ROUTE').length,
         });
     };
-
+    const handleStatusUpdate = async (newStatus) => {
+            try {
+                console.log(`Updating incident ${selectedIncident.id} status to ${newStatus}`);
+    
+                await incidentService.updateStatus(selectedIncident.id, { status: newStatus });
+    
+                // Refresh data after status update
+                if (onIncidentUpdate) {
+                    await onIncidentUpdate();
+                }
+    
+                closeModal();
+            } catch (error) {
+                console.error('Error updating incident status:', error);
+                alert('Failed to update incident status. Please try again.');
+            }
+        };
+    
     // ---------- WEBSOCKET ----------
     useEffect(() => { 
         const client = new Client({
@@ -102,6 +119,7 @@ const DispatcherDashboard = () => {
                         
                         setVehicles(prev => {
                             const exists = prev.find(v => v.id === updatedVehicle.id);
+<<<<<<< HEAD
                             
                             if (!exists) {
                                 console.log("Adding new vehicle:", updatedVehicle.id);
@@ -109,29 +127,53 @@ const DispatcherDashboard = () => {
                                     id: updatedVehicle.id,
                                     status: updatedVehicle.status,
                                     type: updatedVehicle.type,
+=======
+                        
+                            if (!exists) {
+                                return [...prev, {
+                                    id: updatedVehicle.id,
+                                    status: updatedVehicle.status,
+                                    type: updatedVehicle.type ?? "UNKNOWN", // fallback if null
+>>>>>>> Vehicle_simulation
                                     location: {
                                         latitude: updatedVehicle.latitude,
                                         longitude: updatedVehicle.longitude
                                     }
                                 }];
                             }
+<<<<<<< HEAD
                             
                             console.log("Updating existing vehicle:", updatedVehicle.id);
+=======
+                        
+>>>>>>> Vehicle_simulation
                             return prev.map(v => {
                                 if (v.id === updatedVehicle.id) {
                                     return {
                                         ...v,
+<<<<<<< HEAD
                                         status: updatedVehicle.status,
                                         type: updatedVehicle.type,
                                         location: {
                                             latitude: updatedVehicle.latitude,
                                             longitude: updatedVehicle.longitude
+=======
+                                        status: updatedVehicle.status ?? v.status,
+                                        type: updatedVehicle.type ?? v.type, // keep previous type if null
+                                        location: {
+                                            latitude: updatedVehicle.latitude ?? v.location.latitude,
+                                            longitude: updatedVehicle.longitude ?? v.location.longitude
+>>>>>>> Vehicle_simulation
                                         }
                                     };
                                 }
                                 return v;
                             });
                         });
+<<<<<<< HEAD
+=======
+                        
+>>>>>>> Vehicle_simulation
                     } catch (error) {
                         console.error("Error parsing vehicle update:", error);
                     }

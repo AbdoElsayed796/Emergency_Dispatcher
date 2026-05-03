@@ -1,6 +1,5 @@
 package smartemergencydispatcher.service.ReportService;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import smartemergencydispatcher.dto.statsdto.ResponseTimeDTO;
@@ -8,7 +7,6 @@ import smartemergencydispatcher.dto.vehicledto.VehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehiclePerformanceDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleUtilizationDTO;
 import smartemergencydispatcher.model.Assignment;
-import smartemergencydispatcher.model.Vehicle;
 import smartemergencydispatcher.model.enums.IncidentType;
 import smartemergencydispatcher.model.enums.VehicleType;
 import smartemergencydispatcher.repository.AssignmentRepository;
@@ -29,19 +27,21 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<ResponseTimeDTO> getResponseTime(String typeStr, LocalDate from, LocalDate to) {
-
         IncidentType type = (typeStr == null || typeStr.equalsIgnoreCase("ALL"))
                 ? null
                 : IncidentType.valueOf(typeStr.toUpperCase());
 
         List<Object[]> stats = assignmentRepository.getResponseTimeStats(
-                type,
+                type != null ? type.name() : null,  // Convert enum to String
                 from.atStartOfDay(),
                 to.atTime(23, 59, 59)
         );
 
         return stats.stream().map(row -> {
-            IncidentType t = (IncidentType) row[0];
+            // Convert String to IncidentType enum (native query returns String)
+            String typeString = (String) row[0];
+            IncidentType t = IncidentType.valueOf(typeString);
+
             Number avgNum = (Number) row[1];
             Number minNum = (Number) row[2];
             Number maxNum = (Number) row[3];
@@ -73,7 +73,6 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<VehicleUtilizationDTO> getVehicleUtilization(String vehicleTypeStr, LocalDate from, LocalDate to) {
-
         VehicleType vehicleType = (vehicleTypeStr == null || vehicleTypeStr.equalsIgnoreCase("ALL"))
                 ? null
                 : VehicleType.valueOf(vehicleTypeStr.toUpperCase());
@@ -120,7 +119,7 @@ public class ReportServiceImpl implements ReportService {
                 : VehicleType.valueOf(typeStr.toUpperCase());
 
         List<Object[]> results = assignmentRepository.getTopPerformersByVehicle(
-                type,
+                type != null ? type.name() : null,  // Convert enum to String
                 from.atStartOfDay(),
                 to.atTime(23, 59, 59)
         );
@@ -130,7 +129,11 @@ public class ReportServiceImpl implements ReportService {
                 .map(row -> {
                     VehicleDTO vehicleDTO = new VehicleDTO();
                     vehicleDTO.setId((Integer) row[0]);
-                    vehicleDTO.setType((VehicleType) row[1]);
+
+                    // Convert String to VehicleType enum (native query returns String)
+                    String typeString = (String) row[1];
+                    vehicleDTO.setType(VehicleType.valueOf(typeString));
+
                     vehicleDTO.setResponderId((Integer) row[2]);
                     vehicleDTO.setResponderName((String) row[3]);
 
@@ -141,5 +144,4 @@ public class ReportServiceImpl implements ReportService {
                     return new VehiclePerformanceDTO(vehicleDTO, minResponse, avgResponse, totalTasks);
                 }).collect(Collectors.toList());
     }
-
 }
