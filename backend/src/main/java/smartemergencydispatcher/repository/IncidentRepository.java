@@ -1,9 +1,8 @@
 package smartemergencydispatcher.repository;
 
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,9 +59,22 @@ public interface IncidentRepository extends JpaRepository<Incident, Integer> {
 
 
 
-    
+
     @Query("SELECT i FROM Incident i ORDER BY i.reportedTime DESC")
     List<Incident> findAllIncidents();
+
+    // Remove the @Query annotation and use this method name:
+    Optional<Incident> findFirstByStatusOrderByReportedTimeAsc(IncidentStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT i FROM Incident i WHERE i.status = :status ORDER BY i.reportedTime ASC")
+    Optional<Incident> findFirstByStatusWithLock(@Param("status") IncidentStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT i FROM Incident i WHERE i.id = :id")
+    Optional<Incident> findByIdForUpdate(@Param("id") Long id);
+
+
 
 
 }

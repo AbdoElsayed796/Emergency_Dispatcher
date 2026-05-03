@@ -10,19 +10,19 @@
       <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
     </TestPlan>
     <hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="100 Incidents Generator">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="500 Incidents Generator">
         <intProp name="ThreadGroup.num_threads">1</intProp>
         <intProp name="ThreadGroup.ramp_time">1</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
-          <stringProp name="LoopController.loops">100</stringProp>
+          <stringProp name="LoopController.loops">500</stringProp>
           <boolProp name="LoopController.continue_forever">false</boolProp>
         </elementProp>
       </ThreadGroup>
       <hashTree>
         <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Incident data" enabled="true">
-          <stringProp name="filename">/home/abdelrahman/DB/Emergency_Dispatcher/Simulation/incidents_100.csv</stringProp>
+          <stringProp name="filename">/home/abdelrahman/DB/Emergency_Dispatcher/Simulation/incidents_500.csv</stringProp>
           <stringProp name="fileEncoding">UTF-8</stringProp>
           <stringProp name="variableNames">type,severity,lat,lng</stringProp>
           <stringProp name="delimiter">,</stringProp>
