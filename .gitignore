@@ -2,3 +2,18 @@
 application.properties
 application-*.properties
 *.env
+# Vite dependencies
+frontend/.vite/
+frontend/.vite/deps/
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Optional: lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

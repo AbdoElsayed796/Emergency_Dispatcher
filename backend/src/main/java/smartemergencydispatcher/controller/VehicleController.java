@@ -7,6 +7,7 @@ import smartemergencydispatcher.dto.vehicledto.AvailableVehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleCreateDTO;
 import smartemergencydispatcher.dto.vehicledto.VehicleUpdateDTO;
+import smartemergencydispatcher.dto.vehicledto.VehicleLocationUpdateDTO; // ADD THIS
 import smartemergencydispatcher.service.VehicleService.VehicleService;
 
 import java.util.List;
@@ -52,5 +53,17 @@ public class VehicleController {
     public ResponseEntity<Void> deleteVehicle(@PathVariable Integer id) {
         vehicleService.deleteVehicle(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ✅ ADD THIS NEW ENDPOINT FOR LOCATION UPDATES
+    @PostMapping("/updateLocation")
+    public ResponseEntity<Void> updateVehicleLocation(@RequestBody VehicleLocationUpdateDTO dto) {
+        try {
+            vehicleService.updateVehicleLocation(dto);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.err.println("❌ Error updating vehicle location: " + e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

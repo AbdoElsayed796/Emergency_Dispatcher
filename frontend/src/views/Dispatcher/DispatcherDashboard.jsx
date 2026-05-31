@@ -7,7 +7,11 @@ import StatsCards from './StatsCards';
 import IncidentsTable from './IncidentTable/IncidentsTable.jsx';
 import VehiclesGrid from './VehiclesGrid';
 import MapView from './MapView';
-import {vehicleService, incidentService} from "../../api/services/index.js";
+import { vehicleService, incidentService , notificationService } from "../../api/services/index.js";
+
+
+import SockJS from "sockjs-client/dist/sockjs";
+import { Client } from "@stomp/stompjs";
 
 const DispatcherDashboard = () => {
     const [activeTab, setActiveTab] = useState('incidents');
@@ -17,6 +21,7 @@ const DispatcherDashboard = () => {
     const [selectedType, setSelectedType] = useState('All Types');
     const [selectedStatus, setSelectedStatus] = useState('All Statuses');
     const [selectedSeverity, setSelectedSeverity] = useState('All Severities');
+    const [notifications, setNotifications] = useState([]);
     const navigate = useNavigate();
 
     //? State for API data
@@ -30,50 +35,6 @@ const DispatcherDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const notifications = [
-        {
-            id: 1,
-            type: 'urgent',
-            title: 'Critical Incident Unassigned',
-            message: 'INC-002 - Building fire has been waiting for 6 minutes',
-            time: '2 min ago',
-            read: false
-        },
-        {
-            id: 2,
-            type: 'warning',
-            title: 'Vehicle Delayed',
-            message: 'FIRE-03 is experiencing traffic delays. ETA +5 minutes',
-            time: '5 min ago',
-            read: false
-        },
-        {
-            id: 3,
-            type: 'info',
-            title: 'New Incident Reported',
-            message: 'INC-005 - Medical emergency at Downtown Plaza',
-            time: '10 min ago',
-            read: true
-        },
-        {
-            id: 4,
-            type: 'success',
-            title: 'Incident Resolved',
-            message: 'INC-004 has been successfully resolved by AMB-02',
-            time: '15 min ago',
-            read: true
-        },
-        {
-            id: 5,
-            type: 'warning',
-            title: 'Low Vehicle Availability',
-            message: 'Only 2 ambulances available in Zone A',
-            time: '20 min ago',
-            read: true
-        }
-    ];
-
-    // Fetch all data on component mount
     useEffect(() => {
         fetchAllData();
     }, []);
@@ -83,16 +44,15 @@ const DispatcherDashboard = () => {
             setLoading(true);
             setError(null);
 
-            // Fetch incidents and vehicles in parallel
-            const [incidentsData, vehiclesData] = await Promise.all([
+            const [incidentsData, vehiclesData , notificationData] = await Promise.all([
                 incidentService.getAll(),
-                vehicleService.getAll()
+                vehicleService.getAll(),
+                notificationService.getByRole("DISPATCHER"),
             ]);
 
             setIncidents(incidentsData);
             setVehicles(vehiclesData);
-
-            //? Calculate stats from the data
+            setNotifications(notificationData);
             calculateStats(incidentsData, vehiclesData);
 
         } catch (err) {
@@ -104,36 +64,145 @@ const DispatcherDashboard = () => {
     };
 
     const calculateStats = (incidentsData, vehiclesData) => {
-        const activeIncidentsCount = incidentsData.filter(
-            inc => inc.status === 'REPORTED' || inc.status === 'ASSIGNED'
-        ).length;
-
-        const availableVehiclesCount = vehiclesData.filter(
-            v => v.status === 'AVAILABLE'
-        ).length;
-
-        const onRouteCount = vehiclesData.filter(
-            v => v.status === 'ON_ROUTE'
-        ).length;
-
         setStats({
-            activeIncidents: activeIncidentsCount,
-            availableVehicles: availableVehiclesCount,
-            onRoute: onRouteCount,
+            activeIncidents: incidentsData.filter(inc => inc.status === 'REPORTED' || inc.status === 'ASSIGNED').length,
+            availableVehicles: vehiclesData.filter(v => v.status === 'AVAILABLE').length,
+            onRoute: vehiclesData.filter(v => v.status === 'ON_ROUTE').length,
         });
     };
+    const handleStatusUpdate = async (newStatus) => {
+            try {
+                console.log(`Updating incident ${selectedIncident.id} status to ${newStatus}`);
+    
+                await incidentService.updateStatus(selectedIncident.id, { status: newStatus });
+    
+                // Refresh data after status update
+                if (onIncidentUpdate) {
+                    await onIncidentUpdate();
+                }
+    
+                closeModal();
+            } catch (error) {
+                console.error('Error updating incident status:', error);
+                alert('Failed to update incident status. Please try again.');
+            }
+        };
+    
+    // ---------- WEBSOCKET ----------
+    useEffect(() => { 
+        const client = new Client({
+            webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+            reconnectDelay: 5000,
+            
+            onConnect: () => {
+                console.log("✅ WebSocket connected!");
+                client.subscribe("/topic/notification", (msg) => {
+                    console.log("WS NOTIFICATIONS:", msg.body);
+                    setNotifications(JSON.parse(msg.body));
+                });
+                // Subscribe to incidents
+                client.subscribe("/topic/incidents", (msg) => {
+                    console.log("📨 Incidents updated");
+                    const updatedIncidents = JSON.parse(msg.body);
+                
+                    setIncidents(updatedIncidents);
+                    calculateStats(updatedIncidents, vehicles);
+                });
+                
+                client.subscribe("/topic/vehicles", (msg) => {
+                    console.log("🚗 Vehicle update received!");
+                    console.log("Raw message:", msg.body);
+                    
+                    try {
+                        const updatedVehicle = JSON.parse(msg.body);
+                        console.log("Parsed vehicle:", updatedVehicle);
+                        
+                        setVehicles(prev => {
+                            const exists = prev.find(v => v.id === updatedVehicle.id);
+<<<<<<< HEAD
+                            
+                            if (!exists) {
+                                console.log("Adding new vehicle:", updatedVehicle.id);
+                                return [...prev, {
+                                    id: updatedVehicle.id,
+                                    status: updatedVehicle.status,
+                                    type: updatedVehicle.type,
+=======
+                        
+                            if (!exists) {
+                                return [...prev, {
+                                    id: updatedVehicle.id,
+                                    status: updatedVehicle.status,
+                                    type: updatedVehicle.type ?? "UNKNOWN", // fallback if null
+>>>>>>> Vehicle_simulation
+                                    location: {
+                                        latitude: updatedVehicle.latitude,
+                                        longitude: updatedVehicle.longitude
+                                    }
+                                }];
+                            }
+<<<<<<< HEAD
+                            
+                            console.log("Updating existing vehicle:", updatedVehicle.id);
+=======
+                        
+>>>>>>> Vehicle_simulation
+                            return prev.map(v => {
+                                if (v.id === updatedVehicle.id) {
+                                    return {
+                                        ...v,
+<<<<<<< HEAD
+                                        status: updatedVehicle.status,
+                                        type: updatedVehicle.type,
+                                        location: {
+                                            latitude: updatedVehicle.latitude,
+                                            longitude: updatedVehicle.longitude
+=======
+                                        status: updatedVehicle.status ?? v.status,
+                                        type: updatedVehicle.type ?? v.type, // keep previous type if null
+                                        location: {
+                                            latitude: updatedVehicle.latitude ?? v.location.latitude,
+                                            longitude: updatedVehicle.longitude ?? v.location.longitude
+>>>>>>> Vehicle_simulation
+                                        }
+                                    };
+                                }
+                                return v;
+                            });
+                        });
+<<<<<<< HEAD
+=======
+                        
+>>>>>>> Vehicle_simulation
+                    } catch (error) {
+                        console.error("Error parsing vehicle update:", error);
+                    }
+                });
 
-    // Filter logic - Updated to match backend DTO properties
+            },
+            
+            onStompError: (frame) => {
+                console.error("❌ STOMP error:", frame);
+            },
+            
+            onDisconnect: () => {
+                console.log("❌ WebSocket disconnected");
+            }
+        });
+        
+        client.activate();
+        console.log("🔌 WebSocket client activated");
+        
+        return () => {
+            console.log("🔌 Cleaning up WebSocket connection");
+            client.deactivate();
+        };
+    }, []);
+    // Filter logic
     const filteredIncidents = incidents.filter(inc => {
-        // Type filter: backend uses enum IncidentType (FIRE, MEDICAL, POLICE)
         if (selectedType !== 'All Types' && inc.type !== selectedType) return false;
-
-        // Status filter: backend uses enum IncidentStatus (REPORTED, ASSIGNED, RESOLVED)
         if (selectedStatus !== 'All Statuses' && inc.status !== selectedStatus) return false;
-
-        // Severity filter: backend uses enum SeverityLevel (CRITICAL, HIGH, MEDIUM, LOW)
         if (selectedSeverity !== 'All Severities' && inc.severityLevel !== selectedSeverity) return false;
-
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             return (
@@ -145,7 +214,6 @@ const DispatcherDashboard = () => {
                 inc.location?.longitude?.toString().includes(query)
             );
         }
-
         return true;
     });
 
@@ -183,7 +251,6 @@ const DispatcherDashboard = () => {
             <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
             <div className="p-6 max-w-7xl mx-auto">
-                {/* Error message */}
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
                         <span>{error}</span>
@@ -195,6 +262,7 @@ const DispatcherDashboard = () => {
                         </button>
                     </div>
                 )}
+
                 <StatsCards stats={stats} />
 
                 {activeTab === 'incidents' && (
@@ -209,14 +277,34 @@ const DispatcherDashboard = () => {
                         setSelectedSeverity={setSelectedSeverity}
                         filteredIncidents={filteredIncidents}
                         onIncidentUpdate={fetchAllData}
+                        handleDeleteClick={async (id) => {
+                            try {
+                              await incidentService.delete(id); 
+                            } catch (err) {
+                              console.error("Failed to delete incident", err);
+                            }
+                          }}
+
                     />
                 )}
 
                 {activeTab === 'vehicles' && <VehiclesGrid vehicles={vehicles} />}
-                {activeTab === 'map' && <MapView incidents={incidents} vehicles={vehicles} />}
+                {activeTab === 'map' && (
+                    <MapView 
+                    incidents={incidents} 
+                    vehicles={vehicles} 
+                    onDeleteIncident={async (id) => {
+                      try {
+                        await incidentService.delete(id); 
+                      } catch (err) {
+                        console.error("Failed to delete incident", err);
+                      }
+                    }}
+                  />
+                  
+                )}
             </div>
 
-            {/* Overlay to close dropdowns when clicking outside */}
             {(showNotifications || showUserMenu) && (
                 <div
                     className="fixed inset-0 z-40"
